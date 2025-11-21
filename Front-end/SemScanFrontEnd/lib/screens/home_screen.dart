@@ -6,6 +6,8 @@ import '../components/novel_card.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_constants.dart';
 import 'profile_screen.dart';
+import 'search_screen.dart';
+import 'write_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,8 +22,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _screens = [
     const _HomeContent(),
     const ProfileScreen(),
-    const Center(child: Text('Buscar', style: TextStyle(color: Colors.white))),
-    const Center(child: Text('Escrever', style: TextStyle(color: Colors.white))),
+    const SearchScreen(),
+    const WriteScreen(),
   ];
 
   @override

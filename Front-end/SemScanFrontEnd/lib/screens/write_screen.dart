@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import '../components/custom_header.dart';
-import '../components/profile/user_info_header.dart';
+import '../components/custom_button.dart';
 import '../components/profile/book_list_item.dart';
-import '../components/search_input.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_constants.dart';
 
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+class WriteScreen extends StatelessWidget {
+  const WriteScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -15,10 +14,9 @@ class ProfileScreen extends StatelessWidget {
       backgroundColor: AppColors.backgroundDark,
       extendBodyBehindAppBar: true,
       appBar: CustomHeader(
-        title: 'Perfil',
-        actionIcon: Icons.settings_outlined,
+        title: 'Escrever',
         onNotification: () {
-          // Handle settings tap
+          // Handle notification tap
         },
       ),
       body: ScrollConfiguration(
@@ -31,18 +29,25 @@ class ProfileScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const UserInfoHeader(
-                name: 'Jhon doe',
-                location: 'São Paulo - SP',
-                imageUrl: 'https://i.pravatar.cc/300', // Placeholder
-                onEdit: null, // Handle edit
+              // Create Story Button
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingXL),
+                child: CustomButton(
+                  text: 'Criar uma nova história',
+                  icon: Icons.add,
+                  isSecondary: true,
+                  onPressed: () {
+                    // Handle create new story
+                  },
+                ),
               ),
               const SizedBox(height: AppConstants.gapXXL),
               
+              // Drafts Section
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingXL),
                 child: Text(
-                  'Continue lendo',
+                  'Rascunhos',
                   style: TextStyle(
                     color: AppColors.textGrey,
                     fontSize: 16,
@@ -52,33 +57,58 @@ class ProfileScreen extends StatelessWidget {
               ),
               const SizedBox(height: AppConstants.gapMedium),
               
-              // Search Bar
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingXL),
-                child: SearchInput(
-                  controller: TextEditingController(),
-                  onChanged: (query) {
-                    // Handle search in profile
-                  },
-                ),
-              ),
-              const SizedBox(height: AppConstants.gapLarge),
-              
-              // Book List
+              // Drafts List
               ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 padding: EdgeInsets.zero,
-                itemCount: 3,
+                itemCount: 2,
                 itemBuilder: (context, index) {
                   return BookListItem(
                     title: 'Titulo da obra',
                     author: 'Autor da obra',
-                    imageUrl: 'https://picsum.photos/200/300?random=$index',
+                    imageUrl: 'https://picsum.photos/200/300?random=${index + 10}',
                     views: '12k',
                     stars: '1.2k',
                     chapters: '6',
                     tags: const ['Drama', 'Amizade', 'Ficção', '+3'],
+                    onTap: () {},
+                  );
+                },
+              ),
+              
+              const SizedBox(height: AppConstants.gapXXL),
+              
+              // Published Section
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingXL),
+                child: Text(
+                  'Minhas obras',
+                  style: TextStyle(
+                    color: AppColors.textGrey,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppConstants.gapMedium),
+              
+              // Published List
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                padding: EdgeInsets.zero,
+                itemCount: 2,
+                itemBuilder: (context, index) {
+                  return BookListItem(
+                    title: 'Titulo da obra',
+                    author: 'Autor da obra',
+                    imageUrl: 'https://picsum.photos/200/300?random=${index + 20}',
+                    views: '12k',
+                    stars: '1.2k',
+                    chapters: '6',
+                    tags: const ['Drama', 'Amizade', 'Ficção', '+3'],
+                    status: 'Publicado',
                     onTap: () {},
                   );
                 },

@@ -11,6 +11,7 @@ class BookListItem extends StatelessWidget {
   final String chapters;
   final List<String> tags;
   final VoidCallback? onTap;
+  final String? status; // 'Publicado', 'Rascunho', etc.
 
   const BookListItem({
     super.key,
@@ -22,6 +23,7 @@ class BookListItem extends StatelessWidget {
     required this.chapters,
     required this.tags,
     this.onTap,
+    this.status,
   });
 
   @override
@@ -56,6 +58,28 @@ class BookListItem extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Status badge if present
+                  if (status != null) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryYellow,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        status!,
+                        style: const TextStyle(
+                          color: AppColors.backgroundDark,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
                   Text(
                     title,
                     style: const TextStyle(
