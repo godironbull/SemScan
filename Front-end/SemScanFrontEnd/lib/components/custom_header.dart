@@ -9,6 +9,7 @@ class CustomHeader extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final VoidCallback? onBack;
   final VoidCallback? onNotification;
+  final IconData? actionIcon;
 
   const CustomHeader({
     super.key,
@@ -16,6 +17,7 @@ class CustomHeader extends StatelessWidget implements PreferredSizeWidget {
     this.title = '',
     this.onBack,
     this.onNotification,
+    this.actionIcon,
   });
 
   @override
@@ -75,8 +77,8 @@ class CustomHeader extends StatelessWidget implements PreferredSizeWidget {
       ),
       actions: [
         IconButton(
-          icon: const Icon(
-            Icons.notifications_none_outlined,
+          icon: Icon(
+            actionIcon ?? Icons.notifications_none_outlined,
             color: AppColors.primaryYellow,
             size: AppConstants.iconSizeMedium,
           ),

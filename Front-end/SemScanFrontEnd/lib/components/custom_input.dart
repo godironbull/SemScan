@@ -55,10 +55,16 @@ class _CustomInputState extends State<CustomInput> {
               ? _obscureText
               : widget.obscureText,
           keyboardType: widget.keyboardType,
-          style: const TextStyle(color: AppColors.textWhite),
+          style: const TextStyle(
+            color: AppColors.textWhite,
+            fontSize: AppConstants.fontSizeSmall,
+          ),
           decoration: InputDecoration(
             hintText: widget.hintText ?? widget.label,
-            hintStyle: TextStyle(color: AppColors.textGreyDark),
+            hintStyle: TextStyle(
+              color: AppColors.textGreyDark,
+              fontSize: AppConstants.fontSizeSmall - 2,
+            ),
             filled: true,
             fillColor: AppColors.backgroundDark,
             border: OutlineInputBorder(
@@ -88,9 +94,10 @@ class _CustomInputState extends State<CustomInput> {
                 width: 2,
               ),
             ),
+            isDense: true,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: AppConstants.paddingMedium,
-              vertical: AppConstants.paddingSmall,
+              vertical: AppConstants.paddingXS,
             ),
             suffixIcon: widget.showPasswordToggle
                 ? IconButton(
@@ -99,7 +106,7 @@ class _CustomInputState extends State<CustomInput> {
                           ? Icons.visibility_outlined
                           : Icons.visibility_off_outlined,
                       color: AppColors.primaryYellow,
-                      size: AppConstants.iconSizeMedium,
+                      size: 20,
                     ),
                     onPressed: () {
                       setState(() {

@@ -23,7 +23,7 @@ class SectionHeader extends StatelessWidget {
             title,
             style: const TextStyle(
               color: AppColors.textGrey,
-              fontSize: AppConstants.fontSizeLarge, // Using Large for "Tema" as in image it looks big
+              fontSize: 20,
               fontWeight: FontWeight.w600,
             ),
           ),
