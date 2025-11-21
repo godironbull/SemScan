@@ -48,96 +48,109 @@ class _RegisterScreenState extends State<RegisterScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppConstants.paddingXL,
-            ),
-            child: Column(
-              children: [
-                SizedBox(height: AppConstants.gapLarge),
-                const LogoWidget(),
-                SizedBox(height: AppConstants.gapXXL),
-                Text(
-                  'Criar Conta',
-                  style: GoogleFonts.poppins(
-                    color: AppColors.textWhite,
-                    fontSize: AppConstants.fontSizeLarge,
-                    fontWeight: FontWeight.w600,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight,
+              ),
+              child: IntrinsicHeight(
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                    left: AppConstants.paddingXL,
+                    right: AppConstants.paddingXL,
+                    top: AppConstants.paddingLarge,
                   ),
-                ),
-                SizedBox(height: AppConstants.gapXXL),
-                CustomCard(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      CustomInput(
-                        label: 'Nome',
-                        hintText: 'Nome completo',
-                        controller: _nameController,
-                        keyboardType: TextInputType.name,
-                      ),
-                      SizedBox(height: AppConstants.gapLarge),
-                      CustomInput(
-                        label: 'E-mail',
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                      ),
-                      SizedBox(height: AppConstants.gapLarge),
-                      CustomInput(
-                        label: 'Senha',
-                        controller: _passwordController,
-                        obscureText: true,
-                        showPasswordToggle: true,
-                      ),
-                      SizedBox(height: AppConstants.gapLarge),
-                      CustomInput(
-                        label: 'Confirmar Senha',
-                        hintText: 'Confirmar senha',
-                        controller: _confirmPasswordController,
-                        obscureText: true,
-                        showPasswordToggle: true,
-                      ),
-                      SizedBox(height: AppConstants.gapXXL),
-                      CustomButton(
-                        text: 'Criar conta',
-                        onPressed: () {
-                          HapticFeedback.lightImpact();
-                        },
-                      ),
-                      SizedBox(height: AppConstants.gapXL),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      const LogoWidget(),
+                      const Spacer(),
+                      Column(
                         children: [
                           Text(
-                            'Já possui uma conta?',
+                            'Criar Conta',
                             style: GoogleFonts.poppins(
                               color: AppColors.textWhite,
-                              fontSize: AppConstants.fontSizeSmall,
+                              fontSize: AppConstants.fontSizeLarge,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          CustomTextLink(
-                            text: 'Fazer login',
-                            onPressed: () {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const LoginScreen(),
+                          SizedBox(height: AppConstants.gapXXL),
+                          CustomCard(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                CustomInput(
+                                  label: 'Nome',
+                                  hintText: 'Nome completo',
+                                  controller: _nameController,
+                                  keyboardType: TextInputType.name,
                                 ),
-                              );
-                            },
+                                SizedBox(height: AppConstants.gapLarge),
+                                CustomInput(
+                                  label: 'E-mail',
+                                  controller: _emailController,
+                                  keyboardType: TextInputType.emailAddress,
+                                ),
+                                SizedBox(height: AppConstants.gapLarge),
+                                CustomInput(
+                                  label: 'Senha',
+                                  controller: _passwordController,
+                                  obscureText: true,
+                                  showPasswordToggle: true,
+                                ),
+                                SizedBox(height: AppConstants.gapLarge),
+                                CustomInput(
+                                  label: 'Confirmar Senha',
+                                  hintText: 'Confirmar senha',
+                                  controller: _confirmPasswordController,
+                                  obscureText: true,
+                                  showPasswordToggle: true,
+                                ),
+                                SizedBox(height: AppConstants.gapXXL),
+                                CustomButton(
+                                  text: 'Criar conta',
+                                  onPressed: () {
+                                    HapticFeedback.lightImpact();
+                                  },
+                                ),
+                                SizedBox(height: AppConstants.gapXL),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Já possui uma conta?',
+                                      style: GoogleFonts.poppins(
+                                        color: AppColors.textWhite,
+                                        fontSize: AppConstants.fontSizeSmall,
+                                      ),
+                                    ),
+                                    CustomTextLink(
+                                      text: 'Fazer login',
+                                      onPressed: () {
+                                        Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => const LoginScreen(),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
                     ],
                   ),
                 ),
-                SizedBox(height: AppConstants.gapXXL),
-              ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
