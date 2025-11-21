@@ -42,93 +42,108 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingXL),
-            child: Column(
-              children: [
-                SizedBox(height: AppConstants.gapXXL),
-                const LogoWidget(),
-                SizedBox(height: AppConstants.gapXXXL),
-                Text(
-                  'Recuperar Conta',
-                  style: GoogleFonts.poppins(
-                    color: AppColors.textWhite,
-                    fontSize: AppConstants.fontSizeLarge,
-                    fontWeight: FontWeight.w600,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight,
+              ),
+              child: IntrinsicHeight(
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                    left: AppConstants.paddingXL,
+                    right: AppConstants.paddingXL,
+                    top: AppConstants.paddingLarge,
                   ),
-                ),
-                SizedBox(height: AppConstants.gapMedium),
-                Text(
-                  'Digite seu e-mail para receber\ninstruções de recuperação',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                    color: AppColors.textGrey,
-                    fontSize: AppConstants.fontSizeSmall,
-                  ),
-                ),
-                SizedBox(height: AppConstants.gapXXL),
-                CustomCard(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      CustomInput(
-                        label: 'E-mail',
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                      ),
-                      SizedBox(height: AppConstants.gapXXL),
-                      CustomButton(
-                        text: 'Enviar instruções',
-                        onPressed: () {
-                          HapticFeedback.lightImpact();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Instruções de recuperação enviadas para seu e-mail!',
-                                style: GoogleFonts.poppins(
-                                  color: AppColors.textWhite,
-                                ),
-                              ),
-                              backgroundColor: AppColors.cardDark,
-                              duration: const Duration(seconds: 3),
-                            ),
-                          );
-                        },
-                      ),
-                      SizedBox(height: AppConstants.gapXL),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      const LogoWidget(),
+                      const Spacer(),
+                      Column(
                         children: [
                           Text(
-                            'Lembrou sua senha?',
+                            'Recuperar Conta',
                             style: GoogleFonts.poppins(
                               color: AppColors.textWhite,
+                              fontSize: AppConstants.fontSizeLarge,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          SizedBox(height: AppConstants.gapMedium),
+                          Text(
+                            'Digite seu e-mail para receber\ninstruções de recuperação',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                              color: AppColors.textGrey,
                               fontSize: AppConstants.fontSizeSmall,
                             ),
                           ),
-                          CustomTextLink(
-                            text: 'Fazer login',
-                            onPressed: () {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const LoginScreen(),
+                          SizedBox(height: AppConstants.gapXXL),
+                          CustomCard(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                CustomInput(
+                                  label: 'E-mail',
+                                  controller: _emailController,
+                                  keyboardType: TextInputType.emailAddress,
                                 ),
-                              );
-                            },
+                                SizedBox(height: AppConstants.gapXXL),
+                                CustomButton(
+                                  text: 'Enviar instruções',
+                                  onPressed: () {
+                                    HapticFeedback.lightImpact();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Instruções de recuperação enviadas para seu e-mail!',
+                                          style: GoogleFonts.poppins(
+                                            color: AppColors.textWhite,
+                                          ),
+                                        ),
+                                        backgroundColor: AppColors.cardDark,
+                                        duration: const Duration(seconds: 3),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                SizedBox(height: AppConstants.gapXL),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Lembrou sua senha?',
+                                      style: GoogleFonts.poppins(
+                                        color: AppColors.textWhite,
+                                        fontSize: AppConstants.fontSizeSmall,
+                                      ),
+                                    ),
+                                    CustomTextLink(
+                                      text: 'Fazer login',
+                                      onPressed: () {
+                                        Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => const LoginScreen(),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
                     ],
                   ),
                 ),
-                SizedBox(height: AppConstants.gapXXL),
-              ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
