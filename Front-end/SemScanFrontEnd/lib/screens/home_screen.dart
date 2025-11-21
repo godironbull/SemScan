@@ -5,6 +5,7 @@ import '../components/section_header.dart';
 import '../components/novel_card.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_constants.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,38 +17,24 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
+  final List<Widget> _screens = [
+    const _HomeContent(),
+    const ProfileScreen(),
+    const Center(child: Text('Buscar', style: TextStyle(color: Colors.white))),
+    const Center(child: Text('Escrever', style: TextStyle(color: Colors.white))),
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
-      extendBody: true, // Important for glassmorphism navbar
-      extendBodyBehindAppBar: true,
-      appBar: CustomHeader(
-        title: 'Inicio',
-        onNotification: () {
-          // Handle notification tap
-        },
-      ),
+      extendBody: true,
       body: Stack(
         children: [
           // Main Content
-          SingleChildScrollView(
-            padding: const EdgeInsets.only(
-              top: 100, // Adjusted for extended body behind app bar
-              bottom: 100, // Space for navbar
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildSection('Destaques'),
-                const SizedBox(height: AppConstants.gapXXL),
-                _buildSection('Recomendados'),
-                const SizedBox(height: AppConstants.gapXXL),
-                _buildSection('Novos Lançamentos'),
-                const SizedBox(height: AppConstants.gapXXL),
-                _buildSection('Ação'),
-              ],
-            ),
+          IndexedStack(
+            index: _currentIndex,
+            children: _screens,
           ),
           // Bottom Navigation Bar
           Align(
@@ -65,34 +52,69 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+}
 
-  Widget _buildSection(String title) {
+class _HomeContent extends StatelessWidget {
+  const _HomeContent();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      extendBodyBehindAppBar: true,
+      appBar: CustomHeader(
+        title: 'Inicio',
+        onNotification: () {},
+      ),
+      body: ScrollConfiguration(
+        behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.only(
+            top: 100,
+            bottom: 100,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildSection(context, 'Destaques'),
+              const SizedBox(height: AppConstants.gapXXL),
+              _buildSection(context, 'Recomendados'),
+              const SizedBox(height: AppConstants.gapXXL),
+              _buildSection(context, 'Novos Lançamentos'),
+              const SizedBox(height: AppConstants.gapXXL),
+              _buildSection(context, 'Ação'),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSection(BuildContext context, String title) {
     return Column(
       children: [
         SectionHeader(
           title: title,
-          onSeeMore: () {
-            // Handle see more
-          },
+          onSeeMore: () {},
         ),
         const SizedBox(height: AppConstants.gapMedium),
         SizedBox(
-          height: 220, // Height for the card list
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingXL),
-            scrollDirection: Axis.horizontal,
-            itemCount: 5,
-            separatorBuilder: (context, index) => const SizedBox(width: AppConstants.gapMedium),
-            itemBuilder: (context, index) {
-              return NovelCard(
-                title: 'Titulo da Obra $index',
-                author: 'Autor da obra',
-                // imageUrl: 'https://placeholder.com/image.jpg', // Uncomment when real images are available
-                onTap: () {
-                  // Handle card tap
-                },
-              );
-            },
+          height: 220,
+          child: ScrollConfiguration(
+            behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingXL),
+              scrollDirection: Axis.horizontal,
+              itemCount: 5,
+              separatorBuilder: (context, index) => const SizedBox(width: AppConstants.gapMedium),
+              itemBuilder: (context, index) {
+                return NovelCard(
+                  title: 'Titulo da Obra $index',
+                  author: 'Autor da obra',
+                  onTap: () {},
+                );
+              },
+            ),
           ),
         ),
       ],

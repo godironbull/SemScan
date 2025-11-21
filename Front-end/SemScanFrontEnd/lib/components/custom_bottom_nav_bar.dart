@@ -16,7 +16,7 @@ class CustomBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      borderRadius: BorderRadius.zero,
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
@@ -38,7 +38,7 @@ class CustomBottomNavBar extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildNavItem(0, Icons.home_filled, 'Inicio'),
+                _buildNavItem(0, Icons.home_outlined, 'Inicio'),
                 _buildNavItem(1, Icons.person_outline, 'Perfil'),
                 _buildNavItem(2, Icons.search, 'Buscar'),
                 _buildNavItem(3, Icons.edit_outlined, 'Escrever'),
