@@ -55,6 +55,7 @@ class _CustomInputState extends State<CustomInput> {
               ? _obscureText
               : widget.obscureText,
           keyboardType: widget.keyboardType,
+          textAlignVertical: TextAlignVertical.center,
           style: const TextStyle(
             color: AppColors.textWhite,
             fontSize: AppConstants.fontSizeSmall,
