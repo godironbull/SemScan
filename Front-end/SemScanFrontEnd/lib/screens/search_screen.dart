@@ -9,12 +9,13 @@ class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
 
   @override
-  State<SearchScreen> createState() => _SearchScreenState();
+  State<SearchScreen> createState() => SearchScreenState();
 }
 
-class _SearchScreenState extends State<SearchScreen> {
+class SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<Map<String, dynamic>> _filteredBooks = [];
+  final Set<String> _selectedCategories = {};
   
   // Sample data - replace with actual data from API later
   final List<Map<String, dynamic>> _allBooks = [
@@ -65,6 +66,21 @@ class _SearchScreenState extends State<SearchScreen> {
     },
   ];
 
+  final List<String> _availableCategories = [
+    'Destaques',
+    'Recomendados',
+    'Novos Lançamentos',
+    'Ação',
+    'Aventura',
+    'Fantasia',
+    'Romance',
+    'Mistério',
+    'Suspense',
+    'Drama',
+    'Ficção',
+    'Épico',
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -77,24 +93,46 @@ class _SearchScreenState extends State<SearchScreen> {
     super.dispose();
   }
 
+  void selectCategory(String category) {
+    setState(() {
+      _selectedCategories.clear();
+      _selectedCategories.add(category);
+      _filterBooks(_searchController.text);
+    });
+  }
+
+  void _toggleCategory(String category) {
+    setState(() {
+      if (_selectedCategories.contains(category)) {
+        _selectedCategories.remove(category);
+      } else {
+        _selectedCategories.add(category);
+      }
+      _filterBooks(_searchController.text);
+    });
+  }
+
   void _filterBooks(String query) {
     final searchQuery = query.toLowerCase();
     setState(() {
-      if (searchQuery.isEmpty) {
-        _filteredBooks = _allBooks;
-      } else {
-        _filteredBooks = _allBooks.where((book) {
-          final title = book['title'].toString().toLowerCase();
-          final author = book['author'].toString().toLowerCase();
-          final tags = (book['tags'] as List<String>)
-              .map((tag) => tag.toLowerCase())
-              .toList();
-          
-          return title.contains(searchQuery) ||
-                 author.contains(searchQuery) ||
-                 tags.any((tag) => tag.contains(searchQuery));
-        }).toList();
-      }
+      _filteredBooks = _allBooks.where((book) {
+        final title = book['title'].toString().toLowerCase();
+        final author = book['author'].toString().toLowerCase();
+        final tags = (book['tags'] as List<String>)
+            .map((tag) => tag.toLowerCase())
+            .toList();
+        
+        final matchesSearch = searchQuery.isEmpty ||
+            title.contains(searchQuery) ||
+            author.contains(searchQuery) ||
+            tags.any((tag) => tag.contains(searchQuery));
+
+        final matchesCategory = _selectedCategories.isEmpty ||
+            _selectedCategories.any((category) => 
+                tags.contains(category.toLowerCase()));
+
+        return matchesSearch && matchesCategory;
+      }).toList();
     });
   }
 
@@ -128,9 +166,45 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
               ),
               const SizedBox(height: AppConstants.gapLarge),
+
+              // Categories Filter
+              SizedBox(
+                height: 40,
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingXL),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _availableCategories.length,
+                  separatorBuilder: (context, index) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    final category = _availableCategories[index];
+                    final isSelected = _selectedCategories.contains(category);
+                    return FilterChip(
+                      label: Text(category),
+                      selected: isSelected,
+                      onSelected: (selected) => _toggleCategory(category),
+                      backgroundColor: AppColors.cardDark,
+                      selectedColor: AppColors.primaryYellow,
+                      labelStyle: TextStyle(
+                        color: isSelected ? AppColors.primaryBlack : AppColors.textGrey,
+                        fontSize: 12,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        side: BorderSide(
+                          color: isSelected ? AppColors.primaryYellow : AppColors.glassBorder,
+                        ),
+                      ),
+                      showCheckmark: false,
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: AppConstants.gapLarge),
               
-              // Results count or empty state (only show when searching)
-              if (_searchController.text.isNotEmpty)
+              // Results count or empty state (only show when searching or filtering)
+              if (_searchController.text.isNotEmpty || _selectedCategories.isNotEmpty)
                 if (_filteredBooks.isEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(
@@ -158,7 +232,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       ),
                     ),
                   ),
-              if (_searchController.text.isNotEmpty)
+              if (_searchController.text.isNotEmpty || _selectedCategories.isNotEmpty)
                 const SizedBox(height: AppConstants.gapMedium),
               
               // Results List

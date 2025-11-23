@@ -39,6 +39,8 @@ class CustomButton extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppConstants.borderRadiusSmall),
                 ),
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(0, AppConstants.buttonHeight),
               ),
               child: isLoading
                   ? SizedBox(
@@ -77,6 +79,8 @@ class CustomButton extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppConstants.borderRadiusSmall),
                 ),
                 elevation: 0,
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(0, AppConstants.buttonHeight),
               ),
               child: isLoading
                   ? const SizedBox(
@@ -93,7 +97,7 @@ class CustomButton extends StatelessWidget {
                         Text(
                           text,
                           style: const TextStyle(
-                            fontSize: AppConstants.fontSizeSmall,
+                            fontSize: 13,
                             fontWeight: FontWeight.w500,
                           ),
                         ),

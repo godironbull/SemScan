@@ -4,6 +4,7 @@ import '../components/custom_button.dart';
 import '../components/profile/book_list_item.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_constants.dart';
+import 'create_story_screen.dart';
 
 class WriteScreen extends StatelessWidget {
   const WriteScreen({super.key});
@@ -37,7 +38,12 @@ class WriteScreen extends StatelessWidget {
                   icon: Icons.add,
                   isSecondary: true,
                   onPressed: () {
-                    // Handle create new story
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CreateStoryScreen(),
+                      ),
+                    );
                   },
                 ),
               ),
@@ -72,7 +78,23 @@ class WriteScreen extends StatelessWidget {
                     stars: '1.2k',
                     chapters: '6',
                     tags: const ['Drama', 'Amizade', 'Ficção', '+3'],
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CreateStoryScreen(
+                            story: {
+                              'title': 'Titulo da obra',
+                              'author': 'Autor da obra',
+                              'imageUrl': 'https://picsum.photos/200/300?random=${index + 10}',
+                              'tags': ['Drama', 'Amizade', 'Ficção', '+3'],
+                              'status': 'Rascunho',
+                              'synopsis': 'Sinopse de exemplo para o rascunho...',
+                            },
+                          ),
+                        ),
+                      );
+                    },
                   );
                 },
               ),
@@ -109,7 +131,23 @@ class WriteScreen extends StatelessWidget {
                     chapters: '6',
                     tags: const ['Drama', 'Amizade', 'Ficção', '+3'],
                     status: 'Publicado',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CreateStoryScreen(
+                            story: {
+                              'title': 'Titulo da obra',
+                              'author': 'Autor da obra',
+                              'imageUrl': 'https://picsum.photos/200/300?random=${index + 20}',
+                              'tags': ['Drama', 'Amizade', 'Ficção', '+3'],
+                              'status': 'Publicado',
+                              'synopsis': 'Sinopse de exemplo para a obra publicada...',
+                            },
+                          ),
+                        ),
+                      );
+                    },
                   );
                 },
               ),
