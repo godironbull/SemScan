@@ -4,6 +4,7 @@ import '../components/profile/book_list_item.dart';
 import '../components/search_input.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_constants.dart';
+import 'story_detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -67,9 +68,6 @@ class SearchScreenState extends State<SearchScreen> {
   ];
 
   final List<String> _availableCategories = [
-    'Destaques',
-    'Recomendados',
-    'Novos Lançamentos',
     'Ação',
     'Aventura',
     'Fantasia',
@@ -212,12 +210,22 @@ class SearchScreenState extends State<SearchScreen> {
                       vertical: AppConstants.paddingXXL,
                     ),
                     child: Center(
-                      child: Text(
-                        'Nenhum resultado encontrado',
-                        style: TextStyle(
-                          color: AppColors.textGrey,
-                          fontSize: AppConstants.fontSizeMedium,
-                        ),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.search_off,
+                            size: 64,
+                            color: AppColors.textGrey.withOpacity(0.5),
+                          ),
+                          const SizedBox(height: AppConstants.gapMedium),
+                          Text(
+                            'Nenhum resultado encontrado',
+                            style: TextStyle(
+                              color: AppColors.textGrey,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   )
@@ -251,7 +259,23 @@ class SearchScreenState extends State<SearchScreen> {
                     stars: book['stars'],
                     chapters: book['chapters'],
                     tags: List<String>.from(book['tags']),
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => StoryDetailScreen(
+                            title: book['title'],
+                            author: book['author'],
+                            imageUrl: book['imageUrl'],
+                            synopsis: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
+                            tags: List<String>.from(book['tags']),
+                            views: book['views'],
+                            stars: book['stars'],
+                            chapters: book['chapters'],
+                          ),
+                        ),
+                      );
+                    },
                   );
                 },
               ),

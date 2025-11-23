@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'screens/login_screen.dart';
 import 'theme/app_colors.dart';
 import 'providers/story_provider.dart';
+import 'providers/user_provider.dart';
+import 'screens/home_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,8 +16,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => StoryProvider(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => StoryProvider()),
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+      ],
       child: MaterialApp(
         title: 'SemScan',
         debugShowCheckedModeBanner: false,
@@ -28,7 +33,7 @@ class MyApp extends StatelessWidget {
           scaffoldBackgroundColor: AppColors.backgroundDark,
           textTheme: GoogleFonts.poppinsTextTheme(),
         ),
-        home: const LoginScreen(),
+        home: const HomeScreen(),
       ),
     );
   }

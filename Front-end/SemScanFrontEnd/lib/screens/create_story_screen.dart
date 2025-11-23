@@ -6,7 +6,10 @@ import '../components/custom_input.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_constants.dart';
 import '../providers/story_provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import 'chapter_editor_screen.dart';
+import 'story_detail_screen.dart';
 
 class CreateStoryScreen extends StatefulWidget {
   final Map<String, dynamic>? story;
@@ -26,6 +29,8 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
   final Set<String> _selectedCategories = {};
   bool _isPublished = false;
   String? _storyId;
+  File? _coverImage;
+  final ImagePicker _picker = ImagePicker();
 
   final List<String> _availableCategories = [
     'Ação',
@@ -70,6 +75,41 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
       }
     });
   }
+
+  Future<void> _pickCoverImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1200,
+        maxHeight: 1600,
+        imageQuality: 85,
+      );
+      
+      if (image != null) {
+        setState(() {
+          _coverImage = File(image.path);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Seleção de imagem não disponível nesta plataforma. Use um dispositivo móvel.'),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 4),
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + 10,
+              left: 16,
+              right: 16,
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+
 
   bool _validateForm() {
     if (_titleController.text.trim().isEmpty) {
@@ -180,36 +220,67 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Cover Image Placeholder
+              // Cover Image Selector
               Center(
-                child: Row(
+                child: Column(
                   children: [
-                    Container(
-                      width: 120,
-                      height: 160,
-                      decoration: BoxDecoration(
-                        color: AppColors.cardDark,
-                        borderRadius: BorderRadius.circular(AppConstants.borderRadiusMedium),
-                        border: Border.all(
-                          color: AppColors.glassBorder,
-                          width: 1,
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: _pickCoverImage,
+                          child: Container(
+                            width: 120,
+                            height: 160,
+                            decoration: BoxDecoration(
+                              color: AppColors.cardDark,
+                              borderRadius: BorderRadius.circular(AppConstants.borderRadiusMedium),
+                              border: Border.all(
+                                color: AppColors.glassBorder,
+                                width: 1,
+                              ),
+                              image: _coverImage != null
+                                  ? DecorationImage(
+                                      image: FileImage(_coverImage!),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : null,
+                            ),
+                            child: _coverImage == null
+                                ? const Center(
+                                    child: Icon(
+                                      Icons.add_photo_alternate_outlined,
+                                      color: AppColors.primaryYellow,
+                                      size: 32,
+                                    ),
+                                  )
+                                : null,
+                          ),
                         ),
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.add,
-                          color: AppColors.primaryYellow,
-                          size: 32,
+                        const SizedBox(width: AppConstants.gapLarge),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _coverImage == null ? 'Adicionar uma capa' : 'Capa selecionada',
+                                style: const TextStyle(
+                                  color: AppColors.textWhite,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Toque para ${_coverImage == null ? "selecionar" : "alterar"}',
+                                style: const TextStyle(
+                                  color: AppColors.textGrey,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: AppConstants.gapLarge),
-                    const Text(
-                      'Adicionar uma capa',
-                      style: TextStyle(
-                        color: AppColors.textGrey,
-                        fontSize: 14,
-                      ),
+                      ],
                     ),
                   ],
                 ),
@@ -292,7 +363,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                           _isPublished = value;
                         });
                       },
-                      activeColor: AppColors.primaryYellow,
+                      activeThumbColor: AppColors.primaryYellow,
                       activeTrackColor: AppColors.cardDark,
                       inactiveThumbColor: AppColors.textGrey,
                       inactiveTrackColor: AppColors.cardDark,
@@ -300,6 +371,43 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                   ],
                 ),
                 const SizedBox(height: AppConstants.gapXXL),
+              ],
+
+              // View Story Button (only if published)
+              if (_isPublished && _storyId != null) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => StoryDetailScreen(
+                            title: _titleController.text,
+                            author: 'Usuário Atual', // TODO: Get from auth
+                            imageUrl: widget.story?['imageUrl'] ?? 'https://picsum.photos/200/300',
+                            synopsis: _synopsisController.text,
+                            tags: _selectedCategories.toList(),
+                            views: '0', // TODO: Get real stats
+                            stars: '0',
+                            chapters: '0',
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.visibility_outlined),
+                    label: const Text('Ver página da obra (como leitor)'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primaryYellow,
+                      side: const BorderSide(color: AppColors.primaryYellow),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppConstants.borderRadiusSmall),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppConstants.gapMedium),
               ],
 
               // Action Buttons

@@ -64,7 +64,7 @@ class CustomHeader extends StatelessWidget implements PreferredSizeWidget {
               fit: BoxFit.contain,
             ),
             
-          if (!showBackButton && title.isNotEmpty) ...[
+          if (title.isNotEmpty) ...[
             const SizedBox(width: AppConstants.gapSmall),
             Text(
               title,
