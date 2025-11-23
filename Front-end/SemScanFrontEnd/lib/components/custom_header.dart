@@ -10,6 +10,7 @@ class CustomHeader extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onBack;
   final VoidCallback? onNotification;
   final IconData? actionIcon;
+  final Widget? actionWidget;
 
   const CustomHeader({
     super.key,
@@ -18,6 +19,7 @@ class CustomHeader extends StatelessWidget implements PreferredSizeWidget {
     this.onBack,
     this.onNotification,
     this.actionIcon,
+    this.actionWidget,
   });
 
   @override
@@ -76,14 +78,17 @@ class CustomHeader extends StatelessWidget implements PreferredSizeWidget {
         ],
       ),
       actions: [
-        IconButton(
-          icon: Icon(
-            actionIcon ?? Icons.notifications_none_outlined,
-            color: AppColors.primaryYellow,
-            size: AppConstants.iconSizeMedium,
+        if (actionWidget != null)
+          Center(child: actionWidget!)
+        else
+          IconButton(
+            icon: Icon(
+              actionIcon ?? Icons.notifications_none_outlined,
+              color: AppColors.primaryYellow,
+              size: AppConstants.iconSizeMedium,
+            ),
+            onPressed: onNotification,
           ),
-          onPressed: onNotification,
-        ),
         const SizedBox(width: AppConstants.paddingSmall),
       ],
     );

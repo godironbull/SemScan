@@ -44,78 +44,81 @@ class _CustomInputState extends State<CustomInput> {
           widget.label,
           style: const TextStyle(
             color: AppColors.textWhite,
-            fontSize: AppConstants.fontSizeSmall,
-            fontWeight: FontWeight.w500,
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
           ),
         ),
         SizedBox(height: AppConstants.gapXS),
-        TextField(
-          controller: widget.controller,
-          obscureText: widget.showPasswordToggle
-              ? _obscureText
-              : widget.obscureText,
-          keyboardType: widget.keyboardType,
-          textAlignVertical: TextAlignVertical.center,
-          style: const TextStyle(
-            color: AppColors.textWhite,
-            fontSize: AppConstants.fontSizeSmall,
-          ),
-          decoration: InputDecoration(
-            hintText: widget.hintText ?? widget.label,
-            hintStyle: TextStyle(
-              color: AppColors.textGreyDark,
-              fontSize: AppConstants.fontSizeSmall - 2,
+        SizedBox(
+          height: AppConstants.inputHeight,
+          child: TextField(
+            controller: widget.controller,
+            obscureText: widget.showPasswordToggle
+                ? _obscureText
+                : widget.obscureText,
+            keyboardType: widget.keyboardType,
+            textAlignVertical: TextAlignVertical.center,
+            style: const TextStyle(
+              color: AppColors.textWhite,
+              fontSize: 14,
             ),
-            filled: true,
-            fillColor: AppColors.backgroundDark,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(
-                AppConstants.borderRadiusSmall,
+            decoration: InputDecoration(
+              hintText: widget.hintText ?? widget.label,
+              hintStyle: TextStyle(
+                color: AppColors.textGreyDark,
+                fontSize: 13,
               ),
-              borderSide: const BorderSide(
-                color: AppColors.borderWhite,
-                width: 1,
+              filled: true,
+              fillColor: AppColors.backgroundDark,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(
+                  AppConstants.borderRadiusSmall,
+                ),
+                borderSide: const BorderSide(
+                  color: AppColors.borderWhite,
+                  width: 1,
+                ),
               ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(
+                  AppConstants.borderRadiusSmall,
+                ),
+                borderSide: const BorderSide(
+                  color: Color.fromARGB(25, 255, 255, 255),
+                  width: 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(
+                  AppConstants.borderRadiusSmall,
+                ),
+                borderSide: const BorderSide(
+                  color: AppColors.borderYellow,
+                  width: 2,
+                ),
+              ),
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: AppConstants.paddingMedium,
+                vertical: 12,
+              ),
+              suffixIcon: widget.showPasswordToggle
+                  ? IconButton(
+                      icon: Icon(
+                        _obscureText
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        color: AppColors.primaryYellow,
+                        size: 20,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscureText = !_obscureText;
+                        });
+                      },
+                    )
+                  : null,
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(
-                AppConstants.borderRadiusSmall,
-              ),
-              borderSide: const BorderSide(
-                color: Color.fromARGB(25, 255, 255, 255),
-                width: 1,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(
-                AppConstants.borderRadiusSmall,
-              ),
-              borderSide: const BorderSide(
-                color: AppColors.borderYellow,
-                width: 2,
-              ),
-            ),
-            isDense: true,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: AppConstants.paddingMedium,
-              vertical: AppConstants.paddingXS,
-            ),
-            suffixIcon: widget.showPasswordToggle
-                ? IconButton(
-                    icon: Icon(
-                      _obscureText
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
-                      color: AppColors.primaryYellow,
-                      size: 20,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscureText = !_obscureText;
-                      });
-                    },
-                  )
-                : null,
           ),
         ),
       ],

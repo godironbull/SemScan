@@ -18,13 +18,32 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
+  final GlobalKey<SearchScreenState> _searchScreenKey = GlobalKey<SearchScreenState>();
 
-  final List<Widget> _screens = [
-    const _HomeContent(),
-    const ProfileScreen(),
-    const SearchScreen(),
-    const WriteScreen(),
-  ];
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      _HomeContent(
+        onCategorySelected: _navigateToSearchWithCategory,
+      ),
+      const ProfileScreen(),
+      SearchScreen(key: _searchScreenKey),
+      const WriteScreen(),
+    ];
+  }
+
+  void _navigateToSearchWithCategory(String category) {
+    setState(() {
+      _currentIndex = 2; // Index of SearchScreen
+    });
+    // Use a post-frame callback to ensure the widget is built before accessing state
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _searchScreenKey.currentState?.selectCategory(category);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +76,11 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class _HomeContent extends StatelessWidget {
-  const _HomeContent();
+  final Function(String) onCategorySelected;
+
+  const _HomeContent({
+    required this.onCategorySelected,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -97,7 +120,7 @@ class _HomeContent extends StatelessWidget {
       children: [
         SectionHeader(
           title: title,
-          onSeeMore: () {},
+          onSeeMore: () => onCategorySelected(title),
         ),
         const SizedBox(height: AppConstants.gapMedium),
         SizedBox(
