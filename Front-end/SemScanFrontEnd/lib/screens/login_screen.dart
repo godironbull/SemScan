@@ -10,7 +10,9 @@ import '../theme/app_constants.dart';
 import '../theme/app_colors.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
-import 'home_screen.dart';
+
+import 'package:provider/provider.dart';
+import '../providers/user_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -50,8 +52,22 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   child: Column(
                     children: [
-                      const SafeArea(
-                        child: LogoWidget(),
+                      SafeArea(
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            const LogoWidget(),
+                            Positioned(
+                              left: 0,
+                              top: 0,
+                              bottom: 0,
+                              child: IconButton(
+                                icon: const Icon(Icons.arrow_back, color: AppColors.textWhite),
+                                onPressed: () => Navigator.pop(context),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       const Spacer(),
                       Column(
@@ -102,12 +118,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   text: 'Acessar conta',
                                   onPressed: () {
                                     HapticFeedback.lightImpact();
-                                    Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => const HomeScreen(),
-                                      ),
-                                    );
+                                    context.read<UserProvider>().login();
+                                    Navigator.pop(context);
                                   },
                                 ),
                                 SizedBox(height: AppConstants.gapXL),

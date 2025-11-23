@@ -101,6 +101,25 @@ class StoryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Library (Saved Stories)
+  final Set<String> _savedStoryIds = {};
+
+  List<Story> get savedStories =>
+      _stories.where((story) => _savedStoryIds.contains(story.id)).toList();
+
+  bool isStorySaved(String id) {
+    return _savedStoryIds.contains(id);
+  }
+
+  void toggleStorySaved(String id) {
+    if (_savedStoryIds.contains(id)) {
+      _savedStoryIds.remove(id);
+    } else {
+      _savedStoryIds.add(id);
+    }
+    notifyListeners();
+  }
+
   List<Story> searchStories(String query, {List<String>? categories}) {
     final searchQuery = query.toLowerCase();
     return publishedStories.where((story) {

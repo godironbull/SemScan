@@ -8,6 +8,10 @@ import '../theme/app_constants.dart';
 import 'profile_screen.dart';
 import 'search_screen.dart';
 import 'write_screen.dart';
+import 'story_detail_screen.dart';
+import 'package:provider/provider.dart';
+import '../providers/user_provider.dart';
+import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -63,6 +67,15 @@ class _HomeScreenState extends State<HomeScreen> {
             child: CustomBottomNavBar(
               currentIndex: _currentIndex,
               onTap: (index) {
+                if (index == 3) { // Write tab
+                  if (!context.read<UserProvider>().isLoggedIn) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const LoginScreen()),
+                    );
+                    return;
+                  }
+                }
                 setState(() {
                   _currentIndex = index;
                 });
@@ -136,7 +149,24 @@ class _HomeContent extends StatelessWidget {
                 return NovelCard(
                   title: 'Titulo da Obra $index',
                   author: 'Autor da obra',
-                  onTap: () {},
+                  imageUrl: 'https://picsum.photos/200/300?random=$index',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => StoryDetailScreen(
+                          title: 'Titulo da Obra $index',
+                          author: 'Autor da obra',
+                          imageUrl: 'https://picsum.photos/200/300?random=$index',
+                          synopsis: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum do.',
+                          tags: const ['Drama', 'Amizade', 'Ficção', 'Jovem', 'Romance'],
+                          views: '12k',
+                          stars: '1.2k',
+                          chapters: '6',
+                        ),
+                      ),
+                    );
+                  },
                 );
               },
             ),
