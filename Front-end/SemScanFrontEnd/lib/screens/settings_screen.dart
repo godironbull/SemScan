@@ -6,6 +6,9 @@ import 'settings/edit_profile_screen.dart';
 import 'settings/change_password_screen.dart';
 import 'settings/terms_of_use_screen.dart';
 import 'settings/privacy_policy_screen.dart';
+import 'package:provider/provider.dart';
+import '../providers/user_provider.dart';
+import 'home_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -144,7 +147,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   width: double.infinity,
                   child: TextButton(
                     onPressed: () {
-                      // Handle logout
+                      context.read<UserProvider>().logout();
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (context) => const HomeScreen()),
+                        (route) => false,
+                      );
                     },
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
