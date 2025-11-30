@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
+import '../services/download_service.dart';
 
 class Story {
   final String id;
@@ -79,7 +80,8 @@ class StoryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateStory(String id, {
+  void updateStory(
+    String id, {
     String? title,
     String? synopsis,
     List<String>? categories,
@@ -115,14 +117,12 @@ class StoryProvider extends ChangeNotifier {
 
   Future<void> fetchFavorites() async {
     try {
-      // Try to fetch from API first
       final response = await ApiService.get('/favorites/', requiresAuth: true);
       if (response != null) {
         final List<dynamic> data = response;
         _savedStoryIds.clear();
         _savedStoryIds.addAll(data.map((e) => e['story_id'].toString()));
-        
-        // Sync with local storage
+
         await StorageService.saveFavorites(_savedStoryIds.toList());
         notifyListeners();
         return;
@@ -131,7 +131,6 @@ class StoryProvider extends ChangeNotifier {
       debugPrint('Error fetching favorites from API: $e');
     }
 
-    // Fallback to local storage
     try {
       final localFavorites = await StorageService.getFavorites();
       _savedStoryIds.clear();
@@ -144,8 +143,7 @@ class StoryProvider extends ChangeNotifier {
 
   Future<void> toggleStorySaved(String id) async {
     final isSaved = _savedStoryIds.contains(id);
-    
-    // Optimistic update
+
     if (isSaved) {
       _savedStoryIds.remove(id);
     } else {
@@ -153,20 +151,17 @@ class StoryProvider extends ChangeNotifier {
     }
     notifyListeners();
 
-    // Save to local storage immediately
     await StorageService.saveFavorites(_savedStoryIds.toList());
 
     try {
       if (isSaved) {
         await ApiService.delete('/favorites/$id/', requiresAuth: true);
       } else {
-        await ApiService.post('/favorites/', body: {'story_id': id}, requiresAuth: true);
+        await ApiService.post('/favorites/',
+            body: {'story_id': id}, requiresAuth: true);
       }
     } catch (e) {
-      // Don't revert on API error if we want to support offline/frontend-only mode
       debugPrint('Error toggling favorite on API: $e');
-      // If we wanted strict sync, we would revert here. 
-      // But for "frontend only" request, we keep the local state.
     }
   }
 
@@ -184,5 +179,44 @@ class StoryProvider extends ChangeNotifier {
 
       return matchesSearch && matchesCategory;
     }).toList();
+  }
+
+  // Downloads
+  List<Story> _downloadedStories = [];
+  List<Story> get downloadedStories => _downloadedStories;
+
+  Future<void> fetchDownloadedStories() async {
+    _downloadedStories = await DownloadService.getDownloadedStories();
+    notifyListeners();
+  }
+
+  bool isStoryDownloaded(String id) {
+    return _downloadedStories.any((s) => s.id == id);
+  }
+
+  Future<void> downloadStory(
+      Story story, List<Map<String, dynamic>> chapters) async {
+    try {
+      await DownloadService.saveStory(story, chapters);
+      await fetchDownloadedStories();
+    } catch (e) {
+      debugPrint('Error downloading story: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> removeDownloadedStory(String id) async {
+    try {
+      await DownloadService.deleteStory(id);
+      await fetchDownloadedStories();
+    } catch (e) {
+      debugPrint('Error removing downloaded story: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getOfflineChapters(
+      String storyId) async {
+    return await DownloadService.getStoryChapters(storyId);
   }
 }

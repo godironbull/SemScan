@@ -26,7 +26,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<StoryProvider>().fetchFavorites();
+      final provider = context.read<StoryProvider>();
+      provider.fetchFavorites();
+      provider.fetchDownloadedStories();
     });
   }
 
@@ -242,6 +244,77 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         stars: '0', // TODO: Add stars to Story model
                         chapters: '0', // TODO: Add chapters count
                         tags: story.categories,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => StoryDetailScreen(
+                                storyId: story.id,
+                                title: story.title,
+                                author: story.author,
+                                imageUrl: story.coverImageUrl ?? 'https://picsum.photos/200/300',
+                                synopsis: story.synopsis,
+                                tags: story.categories,
+                                views: '0',
+                                stars: '0',
+                                chapters: '0',
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  );
+                },
+              ),
+              const SizedBox(height: AppConstants.gapXXL),
+
+              // Downloads Section
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingXL),
+                child: Text(
+                  'Downloads',
+                  style: TextStyle(
+                    color: AppColors.textGrey,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppConstants.gapMedium),
+
+              Consumer<StoryProvider>(
+                builder: (context, provider, child) {
+                  final downloadedStories = provider.downloadedStories;
+
+                  if (downloadedStories.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.all(AppConstants.paddingXL),
+                      child: Center(
+                        child: Text(
+                          'Nenhum download encontrado.',
+                          style: TextStyle(color: AppColors.textGrey),
+                        ),
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: EdgeInsets.zero,
+                    itemCount: downloadedStories.length,
+                    itemBuilder: (context, index) {
+                      final story = downloadedStories[index];
+                      return BookListItem(
+                        title: story.title,
+                        author: story.author,
+                        imageUrl: story.coverImageUrl ?? 'https://picsum.photos/200/300',
+                        views: '0',
+                        stars: '0',
+                        chapters: '0',
+                        tags: story.categories,
+                        status: 'Baixado',
                         onTap: () {
                           Navigator.push(
                             context,
