@@ -1,4 +1,10 @@
 import 'package:flutter/foundation.dart';
+<<<<<<< Updated upstream
+=======
+import '../services/api_service.dart';
+import '../services/storage_service.dart';
+import '../services/download_service.dart';
+>>>>>>> Stashed changes
 
 class Story {
   final String id;
@@ -134,5 +140,42 @@ class StoryProvider extends ChangeNotifier {
 
       return matchesSearch && matchesCategory;
     }).toList();
+  }
+
+  // Downloads
+  List<Story> _downloadedStories = [];
+  List<Story> get downloadedStories => _downloadedStories;
+
+  Future<void> fetchDownloadedStories() async {
+    _downloadedStories = await DownloadService.getDownloadedStories();
+    notifyListeners();
+  }
+
+  bool isStoryDownloaded(String id) {
+    return _downloadedStories.any((s) => s.id == id);
+  }
+
+  Future<void> downloadStory(Story story, List<Map<String, dynamic>> chapters) async {
+    try {
+      await DownloadService.saveStory(story, chapters);
+      await fetchDownloadedStories();
+    } catch (e) {
+      debugPrint('Error downloading story: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> removeDownloadedStory(String id) async {
+    try {
+      await DownloadService.deleteStory(id);
+      await fetchDownloadedStories();
+    } catch (e) {
+      debugPrint('Error removing downloaded story: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getOfflineChapters(String storyId) async {
+    return await DownloadService.getStoryChapters(storyId);
   }
 }

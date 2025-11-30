@@ -42,6 +42,105 @@ class StoryDetailScreen extends StatefulWidget {
 class _StoryDetailScreenState extends State<StoryDetailScreen> {
   bool _isExpanded = false;
   final TextEditingController _commentController = TextEditingController();
+<<<<<<< Updated upstream
+=======
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.storyId != null) {
+        final provider = context.read<StoryProvider>();
+        if (provider.getStoryById(widget.storyId!) == null) {
+          provider.addStory(Story(
+            id: widget.storyId!,
+            title: widget.title,
+            synopsis: widget.synopsis,
+            categories: widget.tags,
+            coverImageUrl: widget.imageUrl,
+            author: widget.author,
+            status: 'Publicado',
+          ));
+        }
+      }
+    });
+  }
+
+  Future<void> _handleDownload() async {
+    if (widget.storyId == null) return;
+
+    final provider = context.read<StoryProvider>();
+    final isDownloaded = provider.isStoryDownloaded(widget.storyId!);
+
+    if (isDownloaded) {
+      // Remove download
+      try {
+        await provider.removeDownloadedStory(widget.storyId!);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Download removido com sucesso!')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erro ao remover download: $e')),
+          );
+        }
+      }
+    } else {
+      // Start download
+      try {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Iniciando download...')),
+          );
+        }
+
+        // Mock chapters for download - in real app, fetch from API
+        final mockChapters = [
+          {
+            'title': 'Capítulo 1: O Início',
+            'pages': [
+              'Conteúdo do capítulo 1...',
+              'Mais conteúdo...',
+            ]
+          },
+          {
+            'title': 'Capítulo 2: O Meio',
+            'pages': [
+              'Conteúdo do capítulo 2...',
+            ]
+          },
+        ];
+
+        final story = Story(
+          id: widget.storyId!,
+          title: widget.title,
+          synopsis: widget.synopsis,
+          categories: widget.tags,
+          coverImageUrl: widget.imageUrl,
+          author: widget.author,
+          status: 'Publicado',
+        );
+
+        await provider.downloadStory(story, mockChapters);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Download concluído com sucesso!')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erro ao fazer download: $e')),
+          );
+        }
+      }
+    }
+  }
+>>>>>>> Stashed changes
   
   // Sample comments - replace with actual data from API
   final List<Map<String, dynamic>> _comments = [
@@ -378,7 +477,24 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
                                 },
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: 8),
+                            // Download Button
+                            Expanded(
+                              child: Consumer<StoryProvider>(
+                                builder: (context, provider, child) {
+                                  final isDownloaded = widget.storyId != null && 
+                                      provider.isStoryDownloaded(widget.storyId!);
+                                  
+                                  return CustomButton(
+                                    text: isDownloaded ? 'Baixado' : 'Baixar',
+                                    icon: isDownloaded ? Icons.download_done : Icons.download,
+                                    isSecondary: !isDownloaded,
+                                    onPressed: _handleDownload,
+                                  );
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: Consumer<StoryProvider>(
                                 builder: (context, provider, child) {
@@ -386,7 +502,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
                                       provider.isStorySaved(widget.storyId!);
                                   
                                   return CustomButton(
-                                    text: isSaved ? 'Salvo' : 'Biblioteca',
+                                    text: isSaved ? 'Salvo' : 'Salvar',
                                     icon: isSaved ? Icons.check : Icons.add,
                                     isSecondary: !isSaved,
                                     onPressed: () {
