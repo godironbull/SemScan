@@ -42,6 +42,27 @@ class StoryDetailScreen extends StatefulWidget {
 class _StoryDetailScreenState extends State<StoryDetailScreen> {
   bool _isExpanded = false;
   final TextEditingController _commentController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.storyId != null) {
+        final provider = context.read<StoryProvider>();
+        if (provider.getStoryById(widget.storyId!) == null) {
+          provider.addStory(Story(
+            id: widget.storyId!,
+            title: widget.title,
+            synopsis: widget.synopsis,
+            categories: widget.tags,
+            coverImageUrl: widget.imageUrl,
+            author: widget.author,
+            status: 'Publicado',
+          ));
+        }
+      }
+    });
+  }
   
   // Sample comments - replace with actual data from API
   final List<Map<String, dynamic>> _comments = [
