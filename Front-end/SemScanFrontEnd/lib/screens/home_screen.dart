@@ -12,6 +12,7 @@ import 'story_detail_screen.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import 'login_screen.dart';
+import 'notifications_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -102,7 +103,12 @@ class _HomeContent extends StatelessWidget {
       extendBodyBehindAppBar: true,
       appBar: CustomHeader(
         title: 'Inicio',
-        onNotification: () {},
+        onNotification: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+          );
+        },
       ),
       body: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),

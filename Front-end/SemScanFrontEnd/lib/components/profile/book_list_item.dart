@@ -12,6 +12,7 @@ class BookListItem extends StatelessWidget {
   final List<String> tags;
   final VoidCallback? onTap;
   final String? status; // 'Publicado', 'Rascunho', etc.
+  final VoidCallback? onFeedback;
 
   const BookListItem({
     super.key,
@@ -24,6 +25,7 @@ class BookListItem extends StatelessWidget {
     required this.tags,
     this.onTap,
     this.status,
+    this.onFeedback,
   });
 
   @override
@@ -110,6 +112,7 @@ class BookListItem extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 8),
+
                   // Tags
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
@@ -136,6 +139,44 @@ class BookListItem extends StatelessWidget {
                       }).toList(),
                     ),
                   ),
+                  if (onFeedback != null) ...[
+                    const SizedBox(height: 12),
+                    InkWell(
+                      onTap: onFeedback,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.blueAccent.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Colors.blueAccent.withOpacity(0.5),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(
+                              Icons.analytics_outlined,
+                              color: Colors.blueAccent,
+                              size: 16,
+                            ),
+                            SizedBox(width: 6),
+                            Text(
+                              'Ver Feedback',
+                              style: TextStyle(
+                                color: Colors.blueAccent,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

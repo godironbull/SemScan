@@ -5,6 +5,8 @@ import '../components/profile/book_list_item.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_constants.dart';
 import 'create_story_screen.dart';
+import 'feedback_screen.dart';
+import 'notifications_screen.dart';
 
 class WriteScreen extends StatelessWidget {
   const WriteScreen({super.key});
@@ -17,7 +19,10 @@ class WriteScreen extends StatelessWidget {
       appBar: CustomHeader(
         title: 'Escrever',
         onNotification: () {
-          // Handle notification tap
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+          );
         },
       ),
       body: ScrollConfiguration(
@@ -131,6 +136,16 @@ class WriteScreen extends StatelessWidget {
                     chapters: '6',
                     tags: const ['Drama', 'Amizade', 'Ficção', '+3'],
                     status: 'Publicado',
+                    onFeedback: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const FeedbackScreen(
+                            storyTitle: 'Titulo da obra',
+                          ),
+                        ),
+                      );
+                    },
                     onTap: () {
                       Navigator.push(
                         context,
