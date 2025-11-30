@@ -115,6 +115,43 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     HapticFeedback.lightImpact();
                                   },
                                 ),
+                                const SizedBox(height: AppConstants.gapLarge),
+                                Row(
+                                  children: [
+                                    Expanded(child: Divider(color: Colors.white.withOpacity(0.2))),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                                      child: Text(
+                                        'ou',
+                                        style: GoogleFonts.poppins(
+                                          color: AppColors.textGrey,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(child: Divider(color: Colors.white.withOpacity(0.2))),
+                                  ],
+                                ),
+                                const SizedBox(height: AppConstants.gapLarge),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _SocialButton(
+                                        icon: 'assets/images/google_logo.png', // You might need to add this asset or use an Icon
+                                        label: 'Google',
+                                        onTap: () {},
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: _SocialButton(
+                                        icon: 'assets/images/facebook_logo.png', // You might need to add this asset or use an Icon
+                                        label: 'Facebook',
+                                        onTap: () {},
+                                      ),
+                                    ),
+                                  ],
+                                ),
                                 SizedBox(height: AppConstants.gapXL),
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -151,6 +188,53 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _SocialButton extends StatelessWidget {
+  final String icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _SocialButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.white.withOpacity(0.2)),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Since we might not have the assets, let's use Icons for now as placeholders if assets fail, 
+            // but the user asked for social login. I'll use Icons to be safe and avoid broken images.
+            Icon(
+              label == 'Google' ? Icons.g_mobiledata : Icons.facebook,
+              color: AppColors.textWhite,
+              size: 24,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: GoogleFonts.poppins(
+                color: AppColors.textWhite,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
