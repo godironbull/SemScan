@@ -22,6 +22,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   File? _profileImage;
   final ImagePicker _picker = ImagePicker();
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<StoryProvider>().fetchFavorites();
+    });
+  }
+
   Future<void> _pickProfileImage() async {
     try {
       final XFile? image = await _picker.pickImage(
