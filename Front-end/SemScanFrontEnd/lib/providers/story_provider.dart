@@ -1,10 +1,7 @@
 import 'package:flutter/foundation.dart';
-<<<<<<< Updated upstream
-=======
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
 import '../services/download_service.dart';
->>>>>>> Stashed changes
 
 class Story {
   final String id;
@@ -83,7 +80,8 @@ class StoryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateStory(String id, {
+  void updateStory(
+    String id, {
     String? title,
     String? synopsis,
     List<String>? categories,
@@ -117,13 +115,54 @@ class StoryProvider extends ChangeNotifier {
     return _savedStoryIds.contains(id);
   }
 
-  void toggleStorySaved(String id) {
-    if (_savedStoryIds.contains(id)) {
+  Future<void> fetchFavorites() async {
+    try {
+      final response = await ApiService.get('/favorites/', requiresAuth: true);
+      if (response != null) {
+        final List<dynamic> data = response;
+        _savedStoryIds.clear();
+        _savedStoryIds.addAll(data.map((e) => e['story_id'].toString()));
+
+        await StorageService.saveFavorites(_savedStoryIds.toList());
+        notifyListeners();
+        return;
+      }
+    } catch (e) {
+      debugPrint('Error fetching favorites from API: $e');
+    }
+
+    try {
+      final localFavorites = await StorageService.getFavorites();
+      _savedStoryIds.clear();
+      _savedStoryIds.addAll(localFavorites);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error loading local favorites: $e');
+    }
+  }
+
+  Future<void> toggleStorySaved(String id) async {
+    final isSaved = _savedStoryIds.contains(id);
+
+    if (isSaved) {
       _savedStoryIds.remove(id);
     } else {
       _savedStoryIds.add(id);
     }
     notifyListeners();
+
+    await StorageService.saveFavorites(_savedStoryIds.toList());
+
+    try {
+      if (isSaved) {
+        await ApiService.delete('/favorites/$id/', requiresAuth: true);
+      } else {
+        await ApiService.post('/favorites/',
+            body: {'story_id': id}, requiresAuth: true);
+      }
+    } catch (e) {
+      debugPrint('Error toggling favorite on API: $e');
+    }
   }
 
   List<Story> searchStories(String query, {List<String>? categories}) {
@@ -155,7 +194,8 @@ class StoryProvider extends ChangeNotifier {
     return _downloadedStories.any((s) => s.id == id);
   }
 
-  Future<void> downloadStory(Story story, List<Map<String, dynamic>> chapters) async {
+  Future<void> downloadStory(
+      Story story, List<Map<String, dynamic>> chapters) async {
     try {
       await DownloadService.saveStory(story, chapters);
       await fetchDownloadedStories();
@@ -175,7 +215,8 @@ class StoryProvider extends ChangeNotifier {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getOfflineChapters(String storyId) async {
+  Future<List<Map<String, dynamic>>> getOfflineChapters(
+      String storyId) async {
     return await DownloadService.getStoryChapters(storyId);
   }
 }

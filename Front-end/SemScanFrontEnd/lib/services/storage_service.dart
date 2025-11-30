@@ -1,4 +1,4 @@
-import 'package:shared_preferences.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class StorageService {
   static const String _tokenKey = 'auth_token';
@@ -38,6 +38,18 @@ class StorageService {
   static Future<void> removeUserId() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_userIdKey);
+  }
+
+  static const String _favoritesKey = 'favorites';
+
+  static Future<void> saveFavorites(List<String> ids) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_favoritesKey, ids);
+  }
+
+  static Future<List<String>> getFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getStringList(_favoritesKey) ?? [];
   }
 
   // Clear all data

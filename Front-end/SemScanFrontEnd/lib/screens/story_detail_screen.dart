@@ -42,8 +42,6 @@ class StoryDetailScreen extends StatefulWidget {
 class _StoryDetailScreenState extends State<StoryDetailScreen> {
   bool _isExpanded = false;
   final TextEditingController _commentController = TextEditingController();
-<<<<<<< Updated upstream
-=======
 
   @override
   void initState() {
@@ -125,7 +123,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
         );
 
         await provider.downloadStory(story, mockChapters);
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Download concluído com sucesso!')),
@@ -140,8 +138,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
       }
     }
   }
->>>>>>> Stashed changes
-  
+
   // Sample comments - replace with actual data from API
   final List<Map<String, dynamic>> _comments = [
     {
@@ -205,7 +202,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
     if (!_checkLogin()) return;
 
     final controller = TextEditingController(text: currentText);
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -482,9 +479,9 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
                             Expanded(
                               child: Consumer<StoryProvider>(
                                 builder: (context, provider, child) {
-                                  final isDownloaded = widget.storyId != null && 
+                                  final isDownloaded = widget.storyId != null &&
                                       provider.isStoryDownloaded(widget.storyId!);
-                                  
+
                                   return CustomButton(
                                     text: isDownloaded ? 'Baixado' : 'Baixar',
                                     icon: isDownloaded ? Icons.download_done : Icons.download,
@@ -498,9 +495,9 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
                             Expanded(
                               child: Consumer<StoryProvider>(
                                 builder: (context, provider, child) {
-                                  final isSaved = widget.storyId != null && 
+                                  final isSaved = widget.storyId != null &&
                                       provider.isStorySaved(widget.storyId!);
-                                  
+
                                   return CustomButton(
                                     text: isSaved ? 'Salvo' : 'Salvar',
                                     icon: isSaved ? Icons.check : Icons.add,
@@ -510,9 +507,9 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
                                         provider.toggleStorySaved(widget.storyId!);
                                         ScaffoldMessenger.of(context).showSnackBar(
                                           SnackBar(
-                                            content: Text(isSaved 
-                                              ? 'Removido da biblioteca' 
-                                              : 'Adicionado à biblioteca'),
+                                            content: Text(isSaved
+                                                ? 'Removido da biblioteca'
+                                                : 'Adicionado à biblioteca'),
                                             duration: const Duration(seconds: 1),
                                           ),
                                         );
@@ -726,8 +723,6 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
               ],
             ),
           ),
-
-
         ],
       ),
     );
@@ -757,6 +752,4 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
       ],
     );
   }
-
-
 }
