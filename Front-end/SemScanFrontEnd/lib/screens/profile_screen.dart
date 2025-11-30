@@ -9,6 +9,7 @@ import '../theme/app_constants.dart';
 import 'package:provider/provider.dart';
 import '../providers/story_provider.dart';
 import 'story_detail_screen.dart';
+import 'settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -63,7 +64,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: 'Perfil',
         actionIcon: Icons.settings_outlined,
         onNotification: () {
-          // Handle settings tap
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const SettingsScreen()),
+          );
         },
       ),
       body: ScrollConfiguration(
@@ -99,7 +103,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     fit: BoxFit.cover,
                                   )
                                 : const DecorationImage(
-                                    image: NetworkImage('https://i.pravatar.cc/300'),
+                                    image: NetworkImage('https://i.pravatar.cc/300?img=5'),
                                     fit: BoxFit.cover,
                                   ),
                           ),
