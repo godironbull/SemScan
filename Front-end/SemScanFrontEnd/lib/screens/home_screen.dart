@@ -11,6 +11,7 @@ import 'write_screen.dart';
 import 'story_detail_screen.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
+import '../providers/story_provider.dart';
 import 'login_screen.dart';
 import 'notifications_screen.dart';
 
@@ -38,6 +39,10 @@ class _HomeScreenState extends State<HomeScreen> {
       SearchScreen(key: _searchScreenKey),
       const WriteScreen(),
     ];
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<StoryProvider>().fetchStories();
+    });
   }
 
   void _navigateToSearchWithCategory(String category) {
@@ -144,38 +149,53 @@ class _HomeContent extends StatelessWidget {
         const SizedBox(height: AppConstants.gapMedium),
         SizedBox(
           height: 220,
-          child: ScrollConfiguration(
-            behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingXL),
-              scrollDirection: Axis.horizontal,
-              itemCount: 5,
-              separatorBuilder: (context, index) => const SizedBox(width: AppConstants.gapMedium),
-              itemBuilder: (context, index) {
-                return NovelCard(
-                  title: 'Titulo da Obra $index',
-                  author: 'Autor da obra',
-                  imageUrl: 'https://picsum.photos/200/300?random=$index',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => StoryDetailScreen(
-                          title: 'Titulo da Obra $index',
-                          author: 'Autor da obra',
-                          imageUrl: 'https://picsum.photos/200/300?random=$index',
-                          synopsis: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum do.',
-                          tags: const ['Drama', 'Amizade', 'Ficção', 'Jovem', 'Romance'],
-                          views: '12k',
-                          stars: '1.2k',
-                          chapters: '6',
-                        ),
-                      ),
+          child: Consumer<StoryProvider>(
+            builder: (context, provider, child) {
+              if (provider.isLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              
+              final stories = provider.publishedStories;
+              
+              if (stories.isEmpty) {
+                return const Center(child: Text('Nenhuma história encontrada', style: TextStyle(color: Colors.white)));
+              }
+
+              return ScrollConfiguration(
+                behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingXL),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: stories.length,
+                  separatorBuilder: (context, index) => const SizedBox(width: AppConstants.gapMedium),
+                  itemBuilder: (context, index) {
+                    final story = stories[index];
+                    return NovelCard(
+                      title: story.title,
+                      author: story.author,
+                      imageUrl: story.coverImageUrl ?? 'https://picsum.photos/200/300?random=$index',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => StoryDetailScreen(
+                              title: story.title,
+                              author: story.author,
+                              imageUrl: story.coverImageUrl ?? 'https://picsum.photos/200/300?random=$index',
+                              synopsis: story.synopsis,
+                              tags: story.categories,
+                              views: '0', // Placeholder
+                              stars: '0', // Placeholder
+                              chapters: '0', // Placeholder
+                            ),
+                          ),
+                        );
+                      },
                     );
                   },
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
         ),
       ],

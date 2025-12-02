@@ -9,6 +9,8 @@ import '../components/custom_text_link.dart';
 import '../theme/app_constants.dart';
 import '../theme/app_colors.dart';
 import 'login_screen.dart';
+import 'package:provider/provider.dart';
+import '../providers/user_provider.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -111,8 +113,52 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 SizedBox(height: AppConstants.gapXXL),
                                 CustomButton(
                                   text: 'Criar conta',
-                                  onPressed: () {
+                                  onPressed: () async {
                                     HapticFeedback.lightImpact();
+                                    
+                                    // Validation
+                                    if (_nameController.text.isEmpty || 
+                                        _emailController.text.isEmpty || 
+                                        _passwordController.text.isEmpty) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Por favor, preencha todos os campos'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    if (_passwordController.text != _confirmPasswordController.text) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('As senhas não coincidem'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    // Register
+                                    final result = await context.read<UserProvider>().register(
+                                      _nameController.text,
+                                      _emailController.text,
+                                      _passwordController.text,
+                                    );
+
+                                    if (context.mounted) {
+                                      if (result['success'] == true) {
+                                        Navigator.pushReplacementNamed(context, '/home');
+                                      } else {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(result['error'] ?? 'Erro ao criar conta'),
+                                            backgroundColor: Colors.red,
+                                            duration: const Duration(seconds: 5),
+                                          ),
+                                        );
+                                      }
+                                    }
                                   },
                                 ),
                                 const SizedBox(height: AppConstants.gapLarge),

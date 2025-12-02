@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+import 'package:universal_io/io.dart';
 import '../components/custom_header.dart';
 import '../components/profile/book_list_item.dart';
 import '../components/search_input.dart';
@@ -8,6 +8,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_constants.dart';
 import 'package:provider/provider.dart';
 import '../providers/story_provider.dart';
+import '../providers/user_provider.dart';
 import 'story_detail_screen.dart';
 import 'settings_screen.dart';
 
@@ -150,36 +151,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(width: AppConstants.gapLarge),
                     // User Info
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Olá, Jhon doe',
-                            style: TextStyle(
-                              color: AppColors.textWhite,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
+                      child: Consumer<UserProvider>(
+                        builder: (context, userProvider, child) {
+                          final username = userProvider.username ?? 'Usuário';
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Icon(
-                                Icons.location_on_outlined,
-                                color: AppColors.primaryYellow,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 4),
                               Text(
-                                'São Paulo - SP',
-                                style: TextStyle(
-                                  color: AppColors.textGrey,
-                                  fontSize: 14,
+                                'Olá, $username',
+                                style: const TextStyle(
+                                  color: AppColors.textWhite,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.location_on_outlined,
+                                    color: AppColors.primaryYellow,
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'São Paulo - SP',
+                                    style: TextStyle(
+                                      color: AppColors.textGrey,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ],
-                          ),
-                        ],
+                          );
+                        },
                       ),
                     ),
                   ],

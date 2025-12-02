@@ -116,10 +116,26 @@ class _LoginScreenState extends State<LoginScreen> {
                                 SizedBox(height: AppConstants.gapLarge),
                                 CustomButton(
                                   text: 'Acessar conta',
-                                  onPressed: () {
+                                  onPressed: () async {
                                     HapticFeedback.lightImpact();
-                                    context.read<UserProvider>().login();
-                                    Navigator.pop(context);
+                                    final result = await context.read<UserProvider>().login(
+                                      _emailController.text,
+                                      _passwordController.text,
+                                    );
+                                      
+                                    if (context.mounted) {
+                                      if (result['success'] == true) {
+                                        Navigator.pushReplacementNamed(context, '/home');
+                                      } else {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(result['error'] ?? 'Erro ao fazer login'),
+                                            backgroundColor: Colors.red,
+                                            duration: const Duration(seconds: 5),
+                                          ),
+                                        );
+                                      }
+                                    }
                                   },
                                 ),
                                 SizedBox(height: AppConstants.gapXL),

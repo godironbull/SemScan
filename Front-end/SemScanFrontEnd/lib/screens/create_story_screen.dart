@@ -7,7 +7,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_constants.dart';
 import '../providers/story_provider.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+import 'package:universal_io/io.dart';
 import 'chapter_editor_screen.dart';
 import 'story_detail_screen.dart';
 

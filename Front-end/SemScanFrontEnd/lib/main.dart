@@ -11,6 +11,7 @@ void main() {
   runApp(const MyApp());
 }
 
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -33,8 +34,50 @@ class MyApp extends StatelessWidget {
           scaffoldBackgroundColor: AppColors.backgroundDark,
           textTheme: GoogleFonts.poppinsTextTheme(),
         ),
-        home: const HomeScreen(),
+        home: const AuthCheck(),
+        routes: {
+          '/home': (context) => const HomeScreen(),
+          '/login': (context) => const LoginScreen(),
+        },
       ),
     );
   }
 }
+
+class AuthCheck extends StatefulWidget {
+  const AuthCheck({super.key});
+
+  @override
+  State<AuthCheck> createState() => _AuthCheckState();
+}
+
+class _AuthCheckState extends State<AuthCheck> {
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    final userProvider = context.read<UserProvider>();
+    await userProvider.checkLoginStatus();
+    
+    if (mounted) {
+      if (userProvider.isLoggedIn) {
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+  }
+}
+

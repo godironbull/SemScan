@@ -2,7 +2,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class StorageService {
   static const String _tokenKey = 'auth_token';
-  static const String _userIdKey = 'user_id';
 
   // Save token
   static Future<void> saveToken(String token) async {
@@ -16,45 +15,59 @@ class StorageService {
     return prefs.getString(_tokenKey);
   }
 
-  // Remove token
+  // Remove authentication token
   static Future<void> removeToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
   }
 
-  // Save user ID
-  static Future<void> saveUserId(String userId) async {
+  // Save user data
+  static Future<void> saveUserData({
+    required String userId,
+    required String username,
+    required String email,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_userIdKey, userId);
+    await prefs.setString('user_id', userId);
+    await prefs.setString('username', username);
+    await prefs.setString('email', email);
   }
 
   // Get user ID
   static Future<String?> getUserId() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_userIdKey);
+    return prefs.getString('user_id');
   }
 
-  // Remove user ID
-  static Future<void> removeUserId() async {
+  // Get username
+  static Future<String?> getUsername() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_userIdKey);
+    return prefs.getString('username');
   }
 
-  static const String _favoritesKey = 'favorites';
-
-  static Future<void> saveFavorites(List<String> ids) async {
+  // Get email
+  static Future<String?> getEmail() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_favoritesKey, ids);
+    return prefs.getString('email');
   }
 
+  // Remove user data
+  static Future<void> removeUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('user_id');
+    await prefs.remove('username');
+    await prefs.remove('email');
+  }
+
+  // Save favorite story IDs
+  static Future<void> saveFavorites(List<String> favorites) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('favorites', favorites);
+  }
+
+  // Get favorite story IDs
   static Future<List<String>> getFavorites() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getStringList(_favoritesKey) ?? [];
-  }
-
-  // Clear all data
-  static Future<void> clearAll() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    return prefs.getStringList('favorites') ?? [];
   }
 }

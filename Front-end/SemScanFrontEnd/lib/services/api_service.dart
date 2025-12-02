@@ -120,17 +120,26 @@ class ApiService {
       case 204:
         return null;
       case 400:
-        throw Exception('Bad Request: ${response.body}');
+        // Try to parse error message from response
+        try {
+          final errorBody = jsonDecode(response.body);
+          if (errorBody is Map && errorBody.containsKey('error')) {
+            throw Exception(errorBody['error']);
+          }
+        } catch (e) {
+          // If parsing fails, use default message
+        }
+        throw Exception('Requisição inválida. Verifique os dados.');
       case 401:
-        throw Exception('Unauthorized: Please login again');
+        throw Exception('Não autorizado. Faça login novamente.');
       case 403:
-        throw Exception('Forbidden: Access denied');
+        throw Exception('Acesso negado.');
       case 404:
-        throw Exception('Not Found: ${response.body}');
+        throw Exception('Recurso não encontrado.');
       case 500:
-        throw Exception('Server Error: Please try again later');
+        throw Exception('Erro no servidor. Tente novamente mais tarde.');
       default:
-        throw Exception('Error: ${response.statusCode} - ${response.body}');
+        throw Exception('Erro desconhecido (${response.statusCode})');
     }
   }
 

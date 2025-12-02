@@ -57,9 +57,29 @@ class Story {
 }
 
 class StoryProvider extends ChangeNotifier {
-  final List<Story> _stories = [];
+  List<Story> _stories = [];
+  bool _isLoading = false;
 
   List<Story> get allStories => _stories;
+  bool get isLoading => _isLoading;
+
+  Future<void> fetchStories() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final response = await ApiService.get('/novels/');
+      if (response != null) {
+        final List<dynamic> data = response;
+        _stories = data.map((json) => Story.fromMap(json)).toList();
+      }
+    } catch (e) {
+      debugPrint('Error fetching stories: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 
   List<Story> get publishedStories =>
       _stories.where((story) => story.status == 'Publicado').toList();
