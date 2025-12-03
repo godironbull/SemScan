@@ -6,6 +6,7 @@ import '../components/custom_input.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_constants.dart';
 import '../providers/story_provider.dart';
+import '../providers/user_provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:universal_io/io.dart';
 import 'chapter_editor_screen.dart';
@@ -424,42 +425,76 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                   Expanded(
                     child: CustomButton(
                       text: 'Continuar',
-                      onPressed: () {
+                      onPressed: () async {
                         if (!_validateForm()) return;
                         
                         final provider = Provider.of<StoryProvider>(context, listen: false);
+                        final userProvider = Provider.of<UserProvider>(context, listen: false);
                         
                         if (_storyId == null) {
                           // Creating new story
                           final newStory = Story(
-                            id: DateTime.now().millisecondsSinceEpoch.toString(),
+                            id: '', // Will be assigned by backend
                             title: _titleController.text.trim(),
                             synopsis: _synopsisController.text.trim(),
                             categories: _selectedCategories.toList(),
                             status: 'Rascunho',
-                            author: 'Usuário Atual', // TODO: Get from auth
+                            author: userProvider.username ?? 'Anônimo',
                           );
-                          provider.addStory(newStory);
-                          _storyId = newStory.id;
+                          
+                          final createdId = await provider.addStory(newStory);
+                          if (createdId != null) {
+                            setState(() => _storyId = createdId);
+                            
+                            if (mounted) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ChapterEditorScreen(
+                                    storyTitle: _titleController.text.trim(),
+                                  ),
+                                ),
+                              );
+                            }
+                          } else {
+                            // Show error
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Erro ao criar novel. Verifique sua conexão.'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
                         } else {
                           // Updating existing story
-                          provider.updateStory(
+                          final success = await provider.updateStory(
                             _storyId!,
                             title: _titleController.text.trim(),
                             synopsis: _synopsisController.text.trim(),
                             categories: _selectedCategories.toList(),
                             status: _isPublished ? 'Publicado' : 'Rascunho',
                           );
+                          
+                          if (success && mounted) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ChapterEditorScreen(
+                                  storyTitle: _titleController.text.trim(),
+                                ),
+                              ),
+                            );
+                          } else if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Erro ao atualizar novel'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
                         }
-                        
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ChapterEditorScreen(
-                              storyTitle: _titleController.text.trim(),
-                            ),
-                          ),
-                        );
                       },
                     ),
                   ),

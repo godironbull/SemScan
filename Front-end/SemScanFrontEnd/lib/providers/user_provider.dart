@@ -6,11 +6,15 @@ class UserProvider extends ChangeNotifier {
   String? _username;
   String? _email;
   String? _userId;
+  String? _bio;
+  String? _location;
 
   bool get isLoggedIn => _isLoggedIn;
   String? get username => _username;
   String? get email => _email;
   String? get userId => _userId;
+  String? get bio => _bio;
+  String? get location => _location;
 
   Future<Map<String, dynamic>> login(String email, String password) async {
     try {
@@ -30,11 +34,15 @@ class UserProvider extends ChangeNotifier {
           userId: response['user_id'].toString(),
           username: response['username'] ?? email,
           email: response['email'] ?? email,
+          bio: response['bio'],
+          location: response['location'],
         );
         
         _userId = response['user_id'].toString();
         _username = response['username'] ?? email;
         _email = response['email'] ?? email;
+        _bio = response['bio'];
+        _location = response['location'];
         _isLoggedIn = true;
         notifyListeners();
         return {'success': true};
@@ -83,6 +91,51 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
+  
+  Future<bool> updateProfile({
+    required String username,
+    String? bio,
+    String? location,
+  }) async {
+    try {
+      if (_userId == null) return false;
+
+      final response = await ApiService.patch(
+        '/users/$_userId/',
+        body: {
+          'username': username,
+          'bio': bio ?? '',
+          'location': location ?? '',
+        },
+      );
+
+      if (response != null) {
+        _username = username;
+        _bio = bio;
+        _location = location;
+        
+        await StorageService.saveUserData(
+          userId: _userId!,
+          username: username,
+          email: _email ?? '',
+          bio: bio,
+          location: location,
+        );
+        
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Update profile error: $e');
+      return false;
+    }
+  }
+
+  Future<void> updateUsername(String newUsername) async {
+    await updateProfile(username: newUsername, bio: _bio, location: _location);
+  }
+
   Future<void> logout() async {
     await StorageService.removeToken();
     await StorageService.removeUserData();
@@ -90,6 +143,8 @@ class UserProvider extends ChangeNotifier {
     _username = null;
     _email = null;
     _userId = null;
+    _bio = null;
+    _location = null;
     notifyListeners();
   }
 
@@ -102,6 +157,8 @@ class UserProvider extends ChangeNotifier {
       _userId = await StorageService.getUserId();
       _username = await StorageService.getUsername();
       _email = await StorageService.getEmail();
+      _bio = await StorageService.getBio();
+      _location = await StorageService.getLocation();
     }
     
     notifyListeners();

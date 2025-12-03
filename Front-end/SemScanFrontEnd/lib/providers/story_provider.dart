@@ -43,15 +43,15 @@ class Story {
 
   factory Story.fromMap(Map<String, dynamic> map) {
     return Story(
-      id: map['id'],
+      id: map['id'].toString(),
       title: map['title'],
       synopsis: map['synopsis'],
-      categories: List<String>.from(map['categories']),
-      coverImageUrl: map['coverImageUrl'],
+      categories: List<String>.from(map['categories'] ?? []),
+      coverImageUrl: map['cover_image_url'] ?? map['coverImageUrl'],
       status: map['status'] ?? 'Rascunho',
       author: map['author'],
-      createdAt: DateTime.parse(map['createdAt']),
-      updatedAt: DateTime.parse(map['updatedAt']),
+      createdAt: map['createdAt'] != null ? DateTime.parse(map['createdAt']) : null,
+      updatedAt: map['updatedAt'] != null ? DateTime.parse(map['updatedAt']) : null,
     );
   }
 }
@@ -95,28 +95,81 @@ class StoryProvider extends ChangeNotifier {
     }
   }
 
-  void addStory(Story story) {
-    _stories.add(story);
-    notifyListeners();
+  Future<String?> addStory(Story story) async {
+    try {
+      // Call API to create novel in backend
+      final response = await ApiService.post(
+        '/novels/',
+        body: {
+          'title': story.title,
+          'author': story.author,
+          'synopsis': story.synopsis,
+          'categories': story.categories,
+          'status': story.status,
+        },
+      );
+      
+      if (response != null && response['id'] != null) {
+        // Create story with real ID from backend
+        final newStory = Story(
+          id: response['id'].toString(),
+          title: response['title'],
+          author: response['author'],
+          synopsis: response['synopsis'],
+          categories: List<String>.from(response['categories'] ?? []),
+          status: response['status'] ?? 'Rascunho',
+          coverImageUrl: response['cover_image_url'],
+        );
+        
+        _stories.add(newStory);
+        notifyListeners();
+        return newStory.id;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error creating story: $e');
+      return null;
+    }
   }
 
-  void updateStory(
+  Future<bool> updateStory(
     String id, {
     String? title,
     String? synopsis,
     List<String>? categories,
     String? coverImageUrl,
     String? status,
-  }) {
-    final story = getStoryById(id);
-    if (story != null) {
-      if (title != null) story.title = title;
-      if (synopsis != null) story.synopsis = synopsis;
-      if (categories != null) story.categories = categories;
-      if (coverImageUrl != null) story.coverImageUrl = coverImageUrl;
-      if (status != null) story.status = status;
-      story.updatedAt = DateTime.now();
-      notifyListeners();
+  }) async {
+    try {
+      // Call API to update novel in backend
+      final response = await ApiService.patch(
+        '/novels/$id/',
+        body: {
+          if (title != null) 'title': title,
+          if (synopsis != null) 'synopsis': synopsis,
+          if (categories != null) 'categories': categories,
+          if (status != null) 'status': status,
+        },
+      );
+      
+      if (response != null) {
+        // Update local story
+        final story = getStoryById(id);
+        if (story != null) {
+          if (title != null) story.title = title;
+          if (synopsis != null) story.synopsis = synopsis;
+          if (categories != null) story.categories = categories;
+          if (coverImageUrl != null) story.coverImageUrl = coverImageUrl;
+          if (status != null) story.status = status;
+          story.updatedAt = DateTime.now();
+          notifyListeners();
+          return true;
+        }
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error updating story: $e');
+      return false;
     }
   }
 

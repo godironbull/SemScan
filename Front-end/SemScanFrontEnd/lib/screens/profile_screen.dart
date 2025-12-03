@@ -175,7 +175,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    'São Paulo - SP',
+                                    userProvider.location ?? 'Localização não definida',
                                     style: TextStyle(
                                       color: AppColors.textGrey,
                                       fontSize: 14,

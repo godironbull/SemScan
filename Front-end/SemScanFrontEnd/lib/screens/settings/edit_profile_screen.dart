@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../components/custom_header.dart';
 import '../../components/custom_button.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_constants.dart';
+import '../../providers/user_provider.dart';
+import '../../services/storage_service.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -12,12 +15,83 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  final _nameController = TextEditingController(text: 'Jhon doe');
-  final _bioController = TextEditingController(text: 'Apaixonado por livros e histórias de fantasia.');
-  final _locationController = TextEditingController(text: 'São Paulo - SP');
+  final _nameController = TextEditingController();
+  final _bioController = TextEditingController();
+  final _locationController = TextEditingController();
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final userProvider = context.read<UserProvider>();
+    
+    _nameController.text = userProvider.username ?? '';
+    _bioController.text = userProvider.bio ?? '';
+    _locationController.text = userProvider.location ?? '';
+    
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _saveProfile() async {
+    final userProvider = context.read<UserProvider>();
+    
+    final success = await userProvider.updateProfile(
+      username: _nameController.text,
+      bio: _bioController.text,
+      location: _locationController.text,
+    );
+    
+    if (mounted) {
+      if (success) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Perfil atualizado com sucesso!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Erro ao atualizar perfil. Tente novamente.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _bioController.dispose();
+    _locationController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: AppColors.backgroundDark,
+        appBar: const CustomHeader(
+          title: 'Editar Perfil',
+          showBackButton: true,
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(
+            color: AppColors.primaryYellow,
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
       extendBodyBehindAppBar: true,
@@ -47,22 +121,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 controller: _bioController,
                 icon: Icons.edit_note,
                 maxLines: 3,
+                hint: 'Conte um pouco sobre você...',
               ),
               const SizedBox(height: AppConstants.gapLarge),
               _buildTextField(
                 label: 'Localização',
                 controller: _locationController,
                 icon: Icons.location_on_outlined,
+                hint: 'Ex: São Paulo - SP',
               ),
               const SizedBox(height: AppConstants.gapXXL),
               CustomButton(
                 text: 'Salvar Alterações',
-                onPressed: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Perfil atualizado com sucesso!')),
-                  );
-                },
+                onPressed: _saveProfile,
               ),
             ],
           ),
@@ -76,6 +147,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     required TextEditingController controller,
     required IconData icon,
     int maxLines = 1,
+    String? hint,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -103,6 +175,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               prefixIcon: Icon(icon, color: AppColors.textGrey),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.all(16),
+              hintText: hint,
+              hintStyle: TextStyle(
+                color: AppColors.textGrey.withOpacity(0.5),
+              ),
             ),
           ),
         ),

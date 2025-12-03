@@ -29,13 +29,17 @@ class NovelView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+    
     # PATCH /novels/<id>/
-    def pacth(self, request, novel_id):
+    def patch(self, request, novel_id):
         novel = Novel.objects.get(id=novel_id)
         serializer = NovelSerializer(novel, data=request.data, partial=True)
 
         if serializer.is_valid():
             novel = serializer.save()
+            return Response(NovelSerializer(novel).data)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def delete(self, request, novel_id):
         novel = Novel.objects.get(id=novel_id)

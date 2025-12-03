@@ -148,8 +148,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: TextButton(
                     onPressed: () {
                       context.read<UserProvider>().logout();
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (context) => const HomeScreen()),
+                      Navigator.of(context).pushNamedAndRemoveUntil(
+                        '/login',
                         (route) => false,
                       );
                     },

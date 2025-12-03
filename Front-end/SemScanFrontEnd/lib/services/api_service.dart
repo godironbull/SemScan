@@ -92,6 +92,29 @@ class ApiService {
     }
   }
 
+  // PATCH request
+  static Future<dynamic> patch(
+    String endpoint, {
+    Map<String, dynamic>? body,
+    bool requiresAuth = false,
+  }) async {
+    try {
+      final headers = requiresAuth ? await _getAuthHeaders() : _headers;
+      
+      final response = await http
+          .patch(
+            Uri.parse('$baseUrl$endpoint'),
+            headers: headers,
+            body: body != null ? jsonEncode(body) : null,
+          )
+          .timeout(timeout);
+
+      return _handleResponse(response);
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   // DELETE request
   static Future<dynamic> delete(String endpoint, {bool requiresAuth = false}) async {
     try {
