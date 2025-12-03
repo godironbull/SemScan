@@ -38,6 +38,20 @@ class Novel(models.Model):
         self.chapters.remove(chapter)
         self.save()
 
+class Favorite(models.Model):
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='favorites')
+    novel = models.ForeignKey(Novel, on_delete=models.CASCADE, related_name='favorited_by')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.novel.name}"
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user': self.user.to_dict(),
+            'novel': self.novel.to_dict(),
+        }
+        
 class User(models.Model):
     id = models.AutoField(primary_key=True)
     username = models.CharField(max_length=100, unique=True)
