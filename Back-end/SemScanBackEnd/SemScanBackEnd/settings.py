@@ -42,6 +42,12 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
 ]
 
+# Custom authentication backend to support email-based login
+AUTHENTICATION_BACKENDS = [
+    'core.email_backend.EmailBackend',  # Custom email authentication
+    'django.contrib.auth.backends.ModelBackend',  # Default fallback
+]
+
 CORS_ALLOW_ALL_ORIGINS = True
 
 MIDDLEWARE = [

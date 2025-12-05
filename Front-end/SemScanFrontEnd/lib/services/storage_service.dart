@@ -26,6 +26,7 @@ class StorageService {
     required String userId,
     required String username,
     required String email,
+    String? name,
     String? bio,
     String? location,
   }) async {
@@ -33,6 +34,7 @@ class StorageService {
     await prefs.setString('user_id', userId);
     await prefs.setString('username', username);
     await prefs.setString('email', email);
+    if (name != null) await prefs.setString('name', name);
     if (bio != null) await prefs.setString('bio', bio);
     if (location != null) await prefs.setString('location', location);
   }
@@ -55,6 +57,12 @@ class StorageService {
     return prefs.getString('email');
   }
 
+  // Get name
+  static Future<String?> getName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('name');
+  }
+
   // Get bio
   static Future<String?> getBio() async {
     final prefs = await SharedPreferences.getInstance();
@@ -73,8 +81,27 @@ class StorageService {
     await prefs.remove('user_id');
     await prefs.remove('username');
     await prefs.remove('email');
+    await prefs.remove('name');
     await prefs.remove('bio');
     await prefs.remove('location');
+  }
+
+  // Save profile picture path
+  static Future<void> saveProfilePicturePath(String path) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('profile_picture_path', path);
+  }
+
+  // Get profile picture path
+  static Future<String?> getProfilePicturePath() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('profile_picture_path');
+  }
+
+  // Remove profile picture
+  static Future<void> removeProfilePicture() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('profile_picture_path');
   }
 
   // Save favorite story IDs

@@ -21,5 +21,6 @@ class CustomLoginView(ObtainAuthToken):
             'token': token.key,
             'user_id': user.pk,
             'email': user.email,
-            'name': getattr(user, 'name', user.username) 
+            'name': user.first_name or user.username,  # Return first_name if set, otherwise username
+            'username': user.username
         })

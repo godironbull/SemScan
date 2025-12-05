@@ -46,9 +46,10 @@ class RegisterView(APIView):
                           status=status.HTTP_400_BAD_REQUEST)
 
         user = User.objects.create_user(
-            username=username,
+            username=email,  # Use email as username for uniqueness
             email=email,
-            password=password
+            password=password,
+            first_name=username  # Save the provided name as first_name
         )
 
         token, created = Token.objects.get_or_create(user=user)
@@ -57,5 +58,6 @@ class RegisterView(APIView):
             'token': token.key,
             'user_id': user.pk,
             'email': user.email,
-            'username': user.username
+            'username': user.username,
+            'name': user.first_name  # Return the name
         }, status=status.HTTP_201_CREATED)

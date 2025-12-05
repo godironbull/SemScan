@@ -6,15 +6,19 @@ class UserProvider extends ChangeNotifier {
   String? _username;
   String? _email;
   String? _userId;
+  String? _name;
   String? _bio;
   String? _location;
+  String? _profilePicturePath;
 
   bool get isLoggedIn => _isLoggedIn;
   String? get username => _username;
   String? get email => _email;
   String? get userId => _userId;
+  String? get name => _name;
   String? get bio => _bio;
   String? get location => _location;
+  String? get profilePicturePath => _profilePicturePath;
 
   Future<Map<String, dynamic>> login(String email, String password) async {
     try {
@@ -34,6 +38,7 @@ class UserProvider extends ChangeNotifier {
           userId: response['user_id'].toString(),
           username: response['username'] ?? email,
           email: response['email'] ?? email,
+          name: response['name'] ?? response['username'] ?? email,
           bio: response['bio'],
           location: response['location'],
         );
@@ -41,6 +46,7 @@ class UserProvider extends ChangeNotifier {
         _userId = response['user_id'].toString();
         _username = response['username'] ?? email;
         _email = response['email'] ?? email;
+        _name = response['name'] ?? response['username'] ?? email;
         _bio = response['bio'];
         _location = response['location'];
         _isLoggedIn = true;
@@ -74,11 +80,13 @@ class UserProvider extends ChangeNotifier {
           userId: response['user_id'].toString(),
           username: response['username'] ?? username,
           email: response['email'] ?? email,
+          name: response['name'] ?? username,
         );
         
         _userId = response['user_id'].toString();
         _username = response['username'] ?? username;
         _email = response['email'] ?? email;
+        _name = response['name'] ?? username;
         _isLoggedIn = true;
         notifyListeners();
         return {'success': true};
@@ -93,7 +101,7 @@ class UserProvider extends ChangeNotifier {
 
   
   Future<bool> updateProfile({
-    required String username,
+    required String name,
     String? bio,
     String? location,
   }) async {
@@ -103,21 +111,23 @@ class UserProvider extends ChangeNotifier {
       final response = await ApiService.patch(
         '/users/$_userId/',
         body: {
-          'username': username,
+          'name': name,
           'bio': bio ?? '',
           'location': location ?? '',
         },
+        requiresAuth: true,
       );
 
       if (response != null) {
-        _username = username;
+        _name = name;
         _bio = bio;
         _location = location;
         
         await StorageService.saveUserData(
           userId: _userId!,
-          username: username,
+          username: _username ?? _email ?? '',
           email: _email ?? '',
+          name: name,
           bio: bio,
           location: location,
         );
@@ -132,19 +142,36 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> updateUsername(String newUsername) async {
-    await updateProfile(username: newUsername, bio: _bio, location: _location);
+  Future<void> updateUsername(String newName) async {
+    await updateProfile(name: newName, bio: _bio, location: _location);
+  }
+
+  // Set profile picture
+  Future<void> setProfilePicture(String path) async {
+    _profilePicturePath = path;
+    await StorageService.saveProfilePicturePath(path);
+    notifyListeners();
+  }
+
+  // Clear profile picture
+  Future<void> clearProfilePicture() async {
+    _profilePicturePath = null;
+    await StorageService.removeProfilePicture();
+    notifyListeners();
   }
 
   Future<void> logout() async {
     await StorageService.removeToken();
     await StorageService.removeUserData();
+    await StorageService.removeProfilePicture();
     _isLoggedIn = false;
     _username = null;
     _email = null;
     _userId = null;
+    _name = null;
     _bio = null;
     _location = null;
+    _profilePicturePath = null;
     notifyListeners();
   }
 
@@ -157,8 +184,10 @@ class UserProvider extends ChangeNotifier {
       _userId = await StorageService.getUserId();
       _username = await StorageService.getUsername();
       _email = await StorageService.getEmail();
+      _name = await StorageService.getName();
       _bio = await StorageService.getBio();
       _location = await StorageService.getLocation();
+      _profilePicturePath = await StorageService.getProfilePicturePath();
     }
     
     notifyListeners();

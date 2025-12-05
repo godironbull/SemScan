@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:universal_io/io.dart';
+import 'package:path_provider/path_provider.dart';
 import '../components/custom_header.dart';
 import '../components/profile/book_list_item.dart';
 import '../components/search_input.dart';
@@ -30,6 +32,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final provider = context.read<StoryProvider>();
       provider.fetchFavorites();
       provider.fetchDownloadedStories();
+      
+      // Load saved profile picture (base64)
+      final userProvider = context.read<UserProvider>();
+      debugPrint('Profile picture data from provider: ${userProvider.profilePicturePath?.substring(0, 50)}...');
+      
+      if (userProvider.profilePicturePath != null && userProvider.profilePicturePath!.isNotEmpty) {
+        // Force rebuild to show the base64 image
+        if (mounted) {
+          setState(() {});
+        }
+      }
     });
   }
 
@@ -43,23 +56,57 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
       
       if (image != null) {
-        setState(() {
-          _profileImage = File(image.path);
-        });
+        debugPrint('Image picked: ${image.path}');
+        
+        try {
+          // Read image bytes
+          final bytes = await image.readAsBytes();
+          debugPrint('Image size: ${bytes.length} bytes');
+          
+          // Convert to base64
+          final base64Image = base64Encode(bytes);
+          debugPrint('Converted to base64, length: ${base64Image.length}');
+          
+          // Save to provider
+          await context.read<UserProvider>().setProfilePicture(base64Image);
+          debugPrint('Profile picture saved to provider');
+          
+          // Rebuild UI to show base64 image
+          if (mounted) {
+            setState(() {
+              // Clear temp file reference, rely on base64 from provider
+              _profileImage = null;
+            });
+            
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Foto de perfil atualizada!'),
+                backgroundColor: Colors.green,
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
+        } catch (e) {
+          debugPrint('Error saving image: $e');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Erro ao salvar imagem: $e'),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          }
+        }
       }
     } catch (e) {
+      debugPrint('Error picking image: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Seleção de imagem não disponível nesta plataforma. Use um dispositivo móvel.'),
-            backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 4),
-            behavior: SnackBarBehavior.floating,
-            margin: EdgeInsets.only(
-              top: MediaQuery.of(context).padding.top + 10,
-              left: 16,
-              right: 16,
-            ),
+          const SnackBar(
+            content: Text('Erro ao selecionar imagem. Tente novamente.'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
           ),
         );
       }
@@ -99,25 +146,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     // Avatar with Edit Button
                     Stack(
                       children: [
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.2),
-                              width: 2,
-                            ),
-                            image: _profileImage != null
-                                ? DecorationImage(
-                                    image: FileImage(_profileImage!),
-                                    fit: BoxFit.cover,
-                                  )
-                                : const DecorationImage(
-                                    image: NetworkImage('https://i.pravatar.cc/300?img=5'),
-                                    fit: BoxFit.cover,
-                                  ),
-                          ),
+                        Consumer<UserProvider>(
+                          builder: (context, userProvider, child) {
+                            // Check if we have a base64 image
+                            final hasBase64 = userProvider.profilePicturePath != null && 
+                                            userProvider.profilePicturePath!.isNotEmpty;
+                            
+                            debugPrint('Building avatar: hasBase64=$hasBase64, _profileImage=${_profileImage != null}');
+                            
+                            ImageProvider? imageProvider;
+                            
+                            if (_profileImage != null) {
+                              imageProvider = FileImage(_profileImage!);
+                              debugPrint('Using FileImage');
+                            } else if (hasBase64) {
+                              try {
+                                final decoded = base64Decode(userProvider.profilePicturePath!);
+                                imageProvider = MemoryImage(decoded);
+                                debugPrint('Using MemoryImage, decoded ${decoded.length} bytes');
+                              } catch (e) {
+                                debugPrint('Error decoding base64: $e');
+                                imageProvider = const NetworkImage('https://i.pravatar.cc/300?img=5');
+                              }
+                            } else {
+                              imageProvider = const NetworkImage('https://i.pravatar.cc/300?img=5');
+                              debugPrint('Using default NetworkImage');
+                            }
+                            
+                            return Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.2),
+                                  width: 2,
+                                ),
+                                image: DecorationImage(
+                                  image: imageProvider,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            );
+                          },
                         ),
                         Positioned(
                           right: 0,
@@ -153,12 +224,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Expanded(
                       child: Consumer<UserProvider>(
                         builder: (context, userProvider, child) {
-                          final username = userProvider.username ?? 'Usuário';
+                          final displayName = userProvider.name ?? userProvider.username ?? 'Usuário';
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Olá, $username',
+                                'Olá, $displayName',
                                 style: const TextStyle(
                                   color: AppColors.textWhite,
                                   fontSize: 20,

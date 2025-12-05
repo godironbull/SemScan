@@ -29,7 +29,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Future<void> _loadUserData() async {
     final userProvider = context.read<UserProvider>();
     
-    _nameController.text = userProvider.username ?? '';
+    _nameController.text = userProvider.name ?? '';
     _bioController.text = userProvider.bio ?? '';
     _locationController.text = userProvider.location ?? '';
     
@@ -42,7 +42,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final userProvider = context.read<UserProvider>();
     
     final success = await userProvider.updateProfile(
-      username: _nameController.text,
+      name: _nameController.text,
       bio: _bioController.text,
       location: _locationController.text,
     );
