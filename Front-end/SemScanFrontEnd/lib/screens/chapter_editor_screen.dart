@@ -3,13 +3,16 @@ import '../components/custom_header.dart';
 import '../components/custom_button.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_constants.dart';
+import '../services/api_service.dart';
 
 class ChapterEditorScreen extends StatefulWidget {
   final String storyTitle;
+  final String storyId;
 
   const ChapterEditorScreen({
     super.key,
     required this.storyTitle,
+    required this.storyId,
   });
 
   @override
@@ -29,6 +32,9 @@ class _ChapterEditorScreenState extends State<ChapterEditorScreen> {
   
   // Character limit per page
   static const int _charsPerPage = 1500;
+  
+  // Loading state for save operation
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -61,11 +67,69 @@ class _ChapterEditorScreenState extends State<ChapterEditorScreen> {
     _chapters[_currentChapterIndex]['pages'][_currentPageIndex] = _contentController.text;
   }
 
-  void _save() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Salvo com sucesso!')),
-    );
-    Navigator.pop(context);
+  Future<void> _save() async {
+    // Prevent multiple save operations
+    if (_isSaving) return;
+    
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      // Save all chapters to the backend
+      for (var chapter in _chapters) {
+        final String title = chapter['title'];
+        final List<String> pages = chapter['pages'];
+        
+        // Combine all pages into single content
+        final String content = pages.join('\n\n--- Página ---\n\n');
+        
+        // Create chapter via API (endpoint is /api/chapter/ not /api/chapters/)
+        final chapterResponse = await ApiService.post(
+          '/chapter/',
+          body: {
+            'title': title,
+            'content': content,
+          },
+        );
+        
+        if (chapterResponse != null && chapterResponse['id'] != null) {
+          final chapterId = chapterResponse['id'];
+          
+          // Associate chapter with novel (endpoint is /novels/{id}/insert/{chapter_id}/)
+          await ApiService.post(
+            '/novels/${widget.storyId}/insert/$chapterId/',
+          );
+        }
+      }
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Capítulos salvos com sucesso!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        // Pop all screens until we reach WriteScreen
+        Navigator.popUntil(context, (route) => route.isFirst || route.settings.name == '/write');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao salvar capítulos: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
   }
 
   void _addNewChapter() {

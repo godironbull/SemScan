@@ -168,15 +168,31 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
             ),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               if (_storyId != null) {
-                Provider.of<StoryProvider>(context, listen: false).deleteStory(_storyId!);
+                Navigator.pop(context); // Close dialog first
+                
+                final success = await Provider.of<StoryProvider>(context, listen: false).deleteStory(_storyId!);
+                
+                if (mounted) {
+                  if (success) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('História excluída com sucesso'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                    Navigator.pop(context); // Close screen
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Erro ao excluir história'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
               }
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Close screen
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('História excluída com sucesso')),
-              );
             },
             child: const Text(
               'Excluir',
@@ -452,6 +468,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                                 MaterialPageRoute(
                                   builder: (context) => ChapterEditorScreen(
                                     storyTitle: _titleController.text.trim(),
+                                    storyId: createdId,
                                   ),
                                 ),
                               );
@@ -483,6 +500,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                               MaterialPageRoute(
                                 builder: (context) => ChapterEditorScreen(
                                   storyTitle: _titleController.text.trim(),
+                                  storyId: _storyId!,
                                 ),
                               ),
                             );

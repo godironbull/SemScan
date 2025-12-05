@@ -173,9 +173,19 @@ class StoryProvider extends ChangeNotifier {
     }
   }
 
-  void deleteStory(String id) {
-    _stories.removeWhere((story) => story.id == id);
-    notifyListeners();
+  Future<bool> deleteStory(String id) async {
+    try {
+      // Call API to delete novel from backend
+      await ApiService.delete('/novels/$id/');
+      
+      // Remove from local list
+      _stories.removeWhere((story) => story.id == id);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('Error deleting story: $e');
+      return false;
+    }
   }
 
   // Library (Saved Stories)
