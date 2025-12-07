@@ -25,4 +25,5 @@ urlpatterns = [
     path('novels/', include('core.urls.novel_urls') ),
     path('users/', include('core.urls.users_urls') ),
     path('novels_favoritar/', include('core.urls.novels_favoritar_urls') ),
+    path('comments/', include('core.urls.comments_urls') ),
 ]
