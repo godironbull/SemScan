@@ -38,6 +38,22 @@ class Novel(models.Model):
         self.chapters.remove(chapter)
         self.save()
 
+class Comments(models.Model):
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='comments')
+    novel = models.ForeignKey(Novel, on_delete=models.CASCADE, related_name='comments')
+    content = models.TextField()
+
+    def __str__(self):
+        return f"Comment by {self.user.username} on {self.novel.name}"
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user': self.user.to_dict(),
+            'novel': self.novel.to_dict(),
+            'content': self.content,
+        }
+    
 class Favorite(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='favorites')
