@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../components/custom_header.dart';
 import '../components/profile/book_list_item.dart';
 import '../components/search_input.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_constants.dart';
+import '../providers/story_provider.dart';
+import '../providers/user_provider.dart';
+import '../services/api_service.dart';
 import 'story_detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -15,11 +19,13 @@ class SearchScreen extends StatefulWidget {
 
 class SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
+  List<Map<String, dynamic>> _allBooks = [];
   List<Map<String, dynamic>> _filteredBooks = [];
   final Set<String> _selectedCategories = {};
-  
-  // Sample data - replace with actual data from API later
-  final List<Map<String, dynamic>> _allBooks = [
+  bool _isLoading = false;
+
+  // Sample data - kept for fallback or demo purposes
+  final List<Map<String, dynamic>> _sampleBooks = [
     {
       'title': 'A Jornada do Herói',
       'author': 'João Silva',
@@ -67,22 +73,89 @@ class SearchScreenState extends State<SearchScreen> {
     },
   ];
 
-  final List<String> _availableCategories = [
-    'Ação',
-    'Aventura',
-    'Fantasia',
-    'Romance',
-    'Mistério',
-    'Suspense',
-    'Drama',
-    'Ficção',
-    'Épico',
-  ];
+  List<String> _availableCategories = [];
 
   @override
   void initState() {
     super.initState();
-    _filteredBooks = _allBooks; // Show all books initially
+    _loadStories();
+  }
+
+  Future<void> _loadStories() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final storyProvider = context.read<StoryProvider>();
+    await storyProvider.fetchStories();
+
+    // Fetch raw data to get chapters count
+    List<Map<String, dynamic>> booksFromStories = [];
+    try {
+      final response = await ApiService.get('/novels/');
+      if (response != null) {
+        final List<dynamic> novelsData = response;
+        booksFromStories = novelsData.map((novelData) {
+          final chapters = novelData['chapters'] as List<dynamic>?;
+          final chaptersCount = chapters?.length ?? 0;
+          
+          return {
+            'id': novelData['id'].toString(),
+            'title': novelData['title'] ?? 'Sem título',
+            'author': novelData['author'] ?? 'Autor desconhecido',
+            'imageUrl': novelData['cover_image_url'] ?? 
+                       novelData['coverImageUrl'] ?? 
+                       'https://picsum.photos/200/300?random=${novelData['id']}',
+            'views': '0', // Default values - can be updated when backend provides
+            'stars': '0',
+            'chapters': chaptersCount.toString(),
+            'tags': List<String>.from(novelData['categories'] ?? []),
+            'synopsis': novelData['synopsis'] ?? '',
+            'status': novelData['status'] ?? 'Rascunho',
+          };
+        }).where((book) => book['status'] == 'Publicado').toList();
+      }
+    } catch (e) {
+      // Fallback: use stories from provider
+      final publishedStories = storyProvider.publishedStories;
+      booksFromStories = publishedStories.map((story) {
+        return {
+          'id': story.id,
+          'title': story.title,
+          'author': story.author,
+          'imageUrl': story.coverImageUrl ?? 'https://picsum.photos/200/300?random=${story.id}',
+          'views': '0',
+          'stars': '0',
+          'chapters': '0', // Default when chapters data not available
+          'tags': story.categories,
+          'synopsis': story.synopsis,
+          'status': story.status,
+        };
+      }).toList();
+    }
+
+    // Combine real books with sample books (real books first)
+    final allBooks = [...booksFromStories, ..._sampleBooks];
+
+    // Extract unique categories from all books
+    final Set<String> categoriesSet = {};
+    for (var book in allBooks) {
+      final tags = book['tags'] as List<dynamic>;
+      for (var tag in tags) {
+        final tagStr = tag.toString();
+        // Remove '+X' format tags
+        if (!tagStr.startsWith('+') && tagStr.isNotEmpty) {
+          categoriesSet.add(tagStr);
+        }
+      }
+    }
+    _availableCategories = categoriesSet.toList()..sort();
+
+    setState(() {
+      _allBooks = allBooks;
+      _filteredBooks = allBooks;
+      _isLoading = false;
+    });
   }
 
   @override
@@ -114,15 +187,17 @@ class SearchScreenState extends State<SearchScreen> {
     final searchQuery = query.toLowerCase();
     setState(() {
       _filteredBooks = _allBooks.where((book) {
-        final title = book['title'].toString().toLowerCase();
-        final author = book['author'].toString().toLowerCase();
-        final tags = (book['tags'] as List<String>)
-            .map((tag) => tag.toLowerCase())
-            .toList();
+        final title = book['title']?.toString().toLowerCase() ?? '';
+        final author = book['author']?.toString().toLowerCase() ?? '';
+        final synopsis = book['synopsis']?.toString().toLowerCase() ?? '';
+        final tags = (book['tags'] as List<dynamic>?)
+                ?.map((tag) => tag.toString().toLowerCase())
+                .toList() ?? [];
         
         final matchesSearch = searchQuery.isEmpty ||
             title.contains(searchQuery) ||
             author.contains(searchQuery) ||
+            synopsis.contains(searchQuery) ||
             tags.any((tag) => tag.contains(searchQuery));
 
         final matchesCategory = _selectedCategories.isEmpty ||
@@ -164,6 +239,18 @@ class SearchScreenState extends State<SearchScreen> {
                 ),
               ),
               const SizedBox(height: AppConstants.gapLarge),
+
+              // Loading indicator
+              if (_isLoading)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(AppConstants.paddingXXL),
+                    child: CircularProgressIndicator(
+                      color: AppColors.primaryYellow,
+                    ),
+                  ),
+                ),
+              if (_isLoading) const SizedBox(height: AppConstants.gapLarge),
 
               // Categories Filter
               SizedBox(
@@ -264,10 +351,11 @@ class SearchScreenState extends State<SearchScreen> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => StoryDetailScreen(
+                            storyId: book['id']?.toString(),
                             title: book['title'],
                             author: book['author'],
                             imageUrl: book['imageUrl'],
-                            synopsis: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
+                            synopsis: book['synopsis'] ?? 'Sem sinopse disponível.',
                             tags: List<String>.from(book['tags']),
                             views: book['views'],
                             stars: book['stars'],
