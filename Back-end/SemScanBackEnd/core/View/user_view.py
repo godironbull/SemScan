@@ -33,4 +33,14 @@ class UserView(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+    def delete(self, request, user_id):
+        try:
+            user = User.objects.get(id=user_id)
+            user.delete()
+            return Response({"msg": "Usuário excluído com sucesso"}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({"msg": "Usuário não encontrado"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"msg": f"Erro ao excluir usuário: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
     

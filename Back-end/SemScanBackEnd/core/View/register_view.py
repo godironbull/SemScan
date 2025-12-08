@@ -16,10 +16,12 @@ class RegisterView(APIView):
             return Response({'error': 'Todos os campos são obrigatórios'}, 
                           status=status.HTTP_400_BAD_REQUEST)
 
-        if User.objects.filter(username=username).exists():
-            return Response({'error': 'Este nome de usuário já está em uso'}, 
+        # Check if email is already used as username (since we use email as username)
+        if User.objects.filter(username=email).exists():
+            return Response({'error': 'Este email já está cadastrado'}, 
                           status=status.HTTP_400_BAD_REQUEST)
 
+        # Check if email is already registered
         if User.objects.filter(email=email).exists():
             return Response({'error': 'Este email já está cadastrado'}, 
                           status=status.HTTP_400_BAD_REQUEST)
@@ -52,6 +54,10 @@ class RegisterView(APIView):
             first_name=username  # Save the provided name as first_name
         )
 
+        # Profile is auto-created by signal, get it to return data
+        from ..models import UserProfile
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+
         token, created = Token.objects.get_or_create(user=user)
 
         return Response({
@@ -59,5 +65,7 @@ class RegisterView(APIView):
             'user_id': user.pk,
             'email': user.email,
             'username': user.username,
-            'name': user.first_name  # Return the name
+            'name': user.first_name,
+            'bio': profile.bio or '',
+            'location': profile.location or ''
         }, status=status.HTTP_201_CREATED)

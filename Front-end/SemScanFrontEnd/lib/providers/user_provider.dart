@@ -175,6 +175,40 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Delete user account
+  Future<Map<String, dynamic>> deleteAccount() async {
+    try {
+      if (_userId == null) {
+        return {'success': false, 'error': 'Usuário não identificado'};
+      }
+
+      final response = await ApiService.delete(
+        '/users/$_userId/',
+        requiresAuth: true,
+      );
+
+      // Clear local data after successful deletion
+      await StorageService.removeToken();
+      await StorageService.removeUserData();
+      await StorageService.removeProfilePicture();
+      _isLoggedIn = false;
+      _username = null;
+      _email = null;
+      _userId = null;
+      _name = null;
+      _bio = null;
+      _location = null;
+      _profilePicturePath = null;
+      notifyListeners();
+
+      return {'success': true};
+    } catch (e) {
+      debugPrint('Delete account error: $e');
+      String errorMsg = e.toString().replaceAll('Exception: ', '');
+      return {'success': false, 'error': errorMsg};
+    }
+  }
+
   Future<void> checkLoginStatus() async {
     final token = await StorageService.getToken();
     _isLoggedIn = token != null && token.isNotEmpty;

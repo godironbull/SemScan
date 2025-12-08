@@ -146,10 +146,32 @@ class ApiService {
         // Try to parse error message from response
         try {
           final errorBody = jsonDecode(response.body);
-          if (errorBody is Map && errorBody.containsKey('error')) {
-            throw Exception(errorBody['error']);
+          if (errorBody is Map) {
+            // Try different possible error keys
+            if (errorBody.containsKey('error')) {
+              throw Exception(errorBody['error']);
+            } else if (errorBody.containsKey('msg')) {
+              throw Exception(errorBody['msg']);
+            } else if (errorBody.containsKey('message')) {
+              throw Exception(errorBody['message']);
+            } else if (errorBody.containsKey('detail')) {
+              throw Exception(errorBody['detail']);
+            } else if (errorBody.isNotEmpty) {
+              // If there are other keys, try to get the first value
+              final firstKey = errorBody.keys.first;
+              final firstValue = errorBody[firstKey];
+              if (firstValue is String) {
+                throw Exception(firstValue);
+              } else if (firstValue is List && firstValue.isNotEmpty) {
+                throw Exception(firstValue[0].toString());
+              }
+            }
           }
         } catch (e) {
+          // If it's already an Exception with a message, rethrow it
+          if (e is Exception) {
+            rethrow;
+          }
           // If parsing fails, use default message
         }
         throw Exception('Requisição inválida. Verifique os dados.');
