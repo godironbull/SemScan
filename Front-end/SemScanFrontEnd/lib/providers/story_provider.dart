@@ -107,6 +107,7 @@ class StoryProvider extends ChangeNotifier {
           'categories': story.categories,
           'status': story.status,
         },
+        requiresAuth: true,
       );
       
       if (response != null && response['id'] != null) {
@@ -150,6 +151,7 @@ class StoryProvider extends ChangeNotifier {
           if (categories != null) 'categories': categories,
           if (status != null) 'status': status,
         },
+        requiresAuth: true,
       );
       
       if (response != null) {
@@ -176,7 +178,7 @@ class StoryProvider extends ChangeNotifier {
   Future<bool> deleteStory(String id) async {
     try {
       // Call API to delete novel from backend
-      await ApiService.delete('/novels/$id/');
+      await ApiService.delete('/novels/$id/', requiresAuth: true);
       
       // Remove from local list
       _stories.removeWhere((story) => story.id == id);

@@ -91,6 +91,7 @@ class _ChapterEditorScreenState extends State<ChapterEditorScreen> {
             'title': title,
             'content': content,
           },
+          requiresAuth: true,
         );
         
         if (chapterResponse != null && chapterResponse['id'] != null) {
@@ -99,6 +100,7 @@ class _ChapterEditorScreenState extends State<ChapterEditorScreen> {
           // Associate chapter with novel (endpoint is /novels/{id}/insert/{chapter_id}/)
           await ApiService.post(
             '/novels/${widget.storyId}/insert/$chapterId/',
+            requiresAuth: true,
           );
         }
       }
@@ -115,13 +117,26 @@ class _ChapterEditorScreenState extends State<ChapterEditorScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final errorMessage = e.toString();
+        // Check if it's an authentication error
+        final isAuthError = errorMessage.contains('Não autorizado') || 
+                           errorMessage.contains('401') ||
+                           errorMessage.contains('autorizado');
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erro ao salvar capítulos: $e'),
+            content: Text(
+              isAuthError 
+                ? 'Sessão expirada. Por favor, faça login novamente.'
+                : 'Erro ao salvar capítulos: $e'
+            ),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 4),
           ),
         );
+        
+        // Don't redirect on error - let user stay on the page to fix the issue
+        // Only show error message
       }
     } finally {
       if (mounted) {
