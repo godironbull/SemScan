@@ -113,6 +113,76 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   text: 'Criar conta',
                                   onPressed: () {
                                     HapticFeedback.lightImpact();
+<<<<<<< Updated upstream
+=======
+                                    
+                                    // Validation
+                                    if (_nameController.text.isEmpty || 
+                                        _emailController.text.isEmpty || 
+                                        _passwordController.text.isEmpty) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Por favor, preencha todos os campos'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    // Validação de formato de email
+                                    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                                    if (!emailRegex.hasMatch(_emailController.text)) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Por favor, insira um e-mail válido'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    // Validação de tamanho da senha
+                                    if (_passwordController.text.length < 6) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('A senha deve ter pelo menos 6 caracteres'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    if (_passwordController.text != _confirmPasswordController.text) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('As senhas não coincidem'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    // Register
+                                    final result = await context.read<UserProvider>().register(
+                                      _nameController.text,
+                                      _emailController.text,
+                                      _passwordController.text,
+                                    );
+
+                                    if (context.mounted) {
+                                      if (result['success'] == true) {
+                                        Navigator.pushReplacementNamed(context, '/home');
+                                      } else {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(result['error'] ?? 'Erro ao criar conta'),
+                                            backgroundColor: Colors.red,
+                                            duration: const Duration(seconds: 5),
+                                          ),
+                                        );
+                                      }
+                                    }
+>>>>>>> Stashed changes
                                   },
                                 ),
                                 const SizedBox(height: AppConstants.gapLarge),

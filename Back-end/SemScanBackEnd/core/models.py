@@ -39,6 +39,7 @@ class Novel(models.Model):
         self.save()
 
 class Comments(models.Model):
+<<<<<<< Updated upstream
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='comments')
     novel = models.ForeignKey(Novel, on_delete=models.CASCADE, related_name='comments')
@@ -88,3 +89,30 @@ class User(models.Model):
     def remove_favorite(self, novel):
         self.favorites.remove(novel)
         self.save()
+=======
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    novel = models.ForeignKey(Novel, on_delete=models.CASCADE, related_name='comments', null=True, blank=True)
+    chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE, related_name='comments', null=True, blank=True)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.user.username} - {self.content[:20]}'
+
+class Favorite(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites')
+    novel = models.ForeignKey(Novel, on_delete=models.CASCADE, related_name='favorited_by')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'novel')
+
+class Like(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='likes')
+    novel = models.ForeignKey(Novel, on_delete=models.CASCADE, null=True, blank=True, related_name='liked_by')
+    chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE, null=True, blank=True, related_name='liked_by')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'novel', 'chapter')
+>>>>>>> Stashed changes

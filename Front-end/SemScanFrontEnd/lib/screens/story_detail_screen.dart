@@ -42,13 +42,30 @@ class StoryDetailScreen extends StatefulWidget {
 class _StoryDetailScreenState extends State<StoryDetailScreen> {
   bool _isExpanded = false;
   final TextEditingController _commentController = TextEditingController();
+<<<<<<< Updated upstream
 
   @override
   void initState() {
     super.initState();
+=======
+  List<Map<String, dynamic>> _chapters = [];
+  bool _isLoadingChapters = false;
+  int _chaptersCount = 0; // Real count of chapters
+  String _currentLikes = '';
+  // Removed unused field to avoid warning if not used, or keep if planning to use for generic state
+  
+  @override
+  void initState() {
+    super.initState();
+    // Initialize chapters count from widget (will be updated when loading real data)
+    _chaptersCount = int.tryParse(widget.chapters) ?? 0;
+    _currentLikes = widget.stars; // Initialize with passed value
+    
+>>>>>>> Stashed changes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.storyId != null) {
-        final provider = context.read<StoryProvider>();
+        final provider = context.read<StoryProvider>(); 
+        // ... story adding logic ...
         if (provider.getStoryById(widget.storyId!) == null) {
           provider.addStory(Story(
             id: widget.storyId!,
@@ -60,9 +77,176 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
             status: 'Publicado',
           ));
         }
+<<<<<<< Updated upstream
       }
     });
   }
+=======
+        _loadChapters();
+        _loadComments();
+        _loadLikeStatus();
+      }
+    });
+  }
+
+  Future<void> _loadLikeStatus() async {
+      if (widget.storyId == null) return;
+      try {
+        // Fetch like count for the novel
+        // Endpoint: /novels/<id>/like/
+        // Actually the view is LikeView which handles GET /novels/<id>/like/
+        // But need to check if my ApiService can handle this path structure easily.
+        // ApiService.get takes a path.
+        if (context.read<UserProvider>().isLoggedIn) {
+           final response = await ApiService.get('/novels/${widget.storyId}/like/', requiresAuth: true);
+           if (response != null) {
+               if (mounted) {
+                   setState(() {
+                       _currentLikes = (response['count'] ?? 0).toString();
+                   });
+               }
+           }
+        } else {
+           // Maybe public endpoint? LikeView requires IsAuthenticated.
+           // If not logged in, we can't get the live count from THIS endpoint (unless permission changed).
+           // Assuming 'widget.stars' has the initial count from the search/home screen which might be public.
+           // So if not logged in, we keep the passed value.
+        }
+      } catch (e) {
+          debugPrint('Error loading like status: $e');
+      }
+  }
+
+  Future<void> _loadComments() async {
+    if (widget.storyId == null) return;
+    try {
+      final response = await ApiService.get('/comments/?novel_id=${widget.storyId}');
+       if (response != null && response is List) {
+         final List<Map<String, dynamic>> loaded = [];
+         
+         // Assuming we are logged in, otherwise userId is null. 
+         // But Provider.of calls can fail if not in context, though here it is.
+         // Safer access:
+         String? currentUserId;
+         try {
+            currentUserId = Provider.of<UserProvider>(context, listen: false).userId;
+         } catch(e) {/* ignore */}
+         
+         for (var item in response) {
+           loaded.add({
+             'id': item['id'].toString(),
+             'userId': item['user'].toString(),
+             'userName': item['username'] ?? 'Usuário', // Backend serializer might ONLY return user ID now.
+             // If backend follows user's serializer: fields = ["id", "content","novel","user"]
+             // There is NO username in the response.
+             // The frontend needs username. 
+             // IF the backend ONLY returns user ID, we can't show username without fetching it.
+             // For now, I will use "Usuário" or try to handle it.
+             'content': item['content'], // Changed from text
+             'date': item['created_at'] != null ? DateTime.parse(item['created_at']) : DateTime.now(),
+             'isCurrentUser': item['user'].toString() == currentUserId,
+           });
+         }
+         
+         if (mounted) {
+           setState(() {
+             _comments = loaded;
+           });
+         }
+      }
+    } catch(e) {
+      debugPrint('Error loading comments: $e');
+    }
+  }
+  
+  Future<void> _loadChapters() async {
+    if (widget.storyId == null) {
+      // If no storyId, use the chapters count from widget (for backward compatibility)
+      setState(() {
+        _chaptersCount = int.tryParse(widget.chapters) ?? 0;
+      });
+      return;
+    }
+    
+    setState(() {
+      _isLoadingChapters = true;
+    });
+    
+    try {
+      debugPrint('Loading chapters for novel ID: ${widget.storyId}');
+      final novelResponse = await ApiService.get('/novels/${widget.storyId}/');
+      debugPrint('Novel response: $novelResponse');
+      
+      if (novelResponse != null) {
+        // Check if chapters field exists (even if empty list)
+        final chaptersData = novelResponse['chapters'];
+        debugPrint('Chapters data: $chaptersData');
+        debugPrint('Chapters data type: ${chaptersData.runtimeType}');
+        
+        if (chaptersData != null) {
+          final List<dynamic> chaptersList = chaptersData is List ? chaptersData : [];
+          debugPrint('Chapters list length: ${chaptersList.length}');
+          
+          final List<Map<String, dynamic>> chapters = [];
+          for (var chapterData in chaptersList) {
+            debugPrint('Processing chapter: $chapterData');
+            final content = chapterData['content'] ?? '';
+            // Split content by page separator
+            final pages = content.split('\n\n--- Página ---\n\n');
+            if (pages.isEmpty || (pages.length == 1 && pages[0].isEmpty)) {
+              pages.clear();
+              pages.add('');
+            }
+            
+            chapters.add({
+              'title': chapterData['title'] ?? 'Capítulo sem título',
+              'pages': pages,
+              'chapterId': chapterData['id'],
+            });
+          }
+          
+          debugPrint('Processed ${chapters.length} chapters');
+          
+          if (mounted) {
+            setState(() {
+              _chapters = chapters;
+              _chaptersCount = chapters.length;
+              _isLoadingChapters = false;
+            });
+          }
+        } else {
+          debugPrint('Chapters field is null');
+          if (mounted) {
+            setState(() {
+              _chapters = [];
+              _chaptersCount = 0;
+              _isLoadingChapters = false;
+            });
+          }
+        }
+      } else {
+        debugPrint('Novel response is null');
+        if (mounted) {
+          setState(() {
+            _chapters = [];
+            _chaptersCount = 0;
+            _isLoadingChapters = false;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading chapters: $e');
+      debugPrint('Stack trace: ${StackTrace.current}');
+      if (mounted) {
+        setState(() {
+          // Fallback to widget.chapters if loading fails
+          _chaptersCount = int.tryParse(widget.chapters) ?? 0;
+          _isLoadingChapters = false;
+        });
+      }
+    }
+  }
+>>>>>>> Stashed changes
 
   Future<void> _handleDownload() async {
     if (widget.storyId == null) return;
@@ -139,25 +323,8 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
     }
   }
 
-  // Sample comments - replace with actual data from API
-  final List<Map<String, dynamic>> _comments = [
-    {
-      'id': '1',
-      'userId': 'user1',
-      'userName': 'João Silva',
-      'text': 'Adorei essa história! Muito bem escrita e envolvente.',
-      'date': DateTime.now().subtract(const Duration(days: 2)),
-      'isCurrentUser': false,
-    },
-    {
-      'id': '2',
-      'userId': 'current',
-      'userName': 'Você',
-      'text': 'Estou ansioso para os próximos capítulos!',
-      'date': DateTime.now().subtract(const Duration(hours: 5)),
-      'isCurrentUser': true,
-    },
-  ];
+  // Comments list
+  List<Map<String, dynamic>> _comments = [];
 
   @override
   void dispose() {
@@ -176,26 +343,44 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
     return true;
   }
 
-  void _addComment() {
+  Future<void> _addComment() async {
     if (!_checkLogin()) return;
 
     if (_commentController.text.trim().isEmpty) return;
+    
+    if (widget.storyId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erro: ID da história não encontrado')),
+      );
+      return;
+    }
 
-    setState(() {
-      _comments.insert(0, {
-        'id': DateTime.now().millisecondsSinceEpoch.toString(),
-        'userId': 'current',
-        'userName': 'Você',
-        'text': _commentController.text.trim(),
-        'date': DateTime.now(),
-        'isCurrentUser': true,
-      });
-      _commentController.clear();
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Comentário adicionado com sucesso!')),
-    );
+    try {
+      final response = await ApiService.post(
+        '/comments/',
+        body: {
+          'novel': widget.storyId,
+          'content': _commentController.text.trim(),
+        },
+        requiresAuth: true,
+      );
+      
+      if (response != null) {
+        _commentController.clear();
+        await _loadComments();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Comentário adicionado com sucesso!')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+           SnackBar(content: Text('Erro ao adicionar comentário: $e')),
+        );
+      }
+    }
   }
 
   void _editComment(String commentId, String currentText) {
@@ -231,17 +416,30 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
             child: const Text('Cancelar', style: TextStyle(color: AppColors.textGrey)),
           ),
           TextButton(
-            onPressed: () {
-              setState(() {
-                final index = _comments.indexWhere((c) => c['id'] == commentId);
-                if (index != -1) {
-                  _comments[index]['text'] = controller.text.trim();
-                }
-              });
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Comentário editado com sucesso!')),
-              );
+              try {
+                final response = await ApiService.put(
+                   '/comments/$commentId/',
+                   body: {'content': controller.text.trim()},
+                   requiresAuth: true,
+                );
+                
+                if (response != null) {
+                  await _loadComments();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Comentário editado com sucesso!')),
+                    );
+                  }
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Erro ao editar comentário: $e')),
+                  );
+                }
+              }
             },
             child: const Text('Salvar', style: TextStyle(color: AppColors.primaryYellow)),
           ),
@@ -271,14 +469,25 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
             child: const Text('Cancelar', style: TextStyle(color: AppColors.textGrey)),
           ),
           TextButton(
-            onPressed: () {
-              setState(() {
-                _comments.removeWhere((c) => c['id'] == commentId);
-              });
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Comentário excluído com sucesso!')),
-              );
+              try {
+                await ApiService.delete('/comments/$commentId/', requiresAuth: true);
+                
+                await _loadComments();
+                
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Comentário excluído com sucesso!')),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Erro ao excluir comentário: $e')),
+                  );
+                }
+              }
             },
             child: const Text('Excluir', style: TextStyle(color: Colors.red)),
           ),
@@ -432,7 +641,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
                             children: [
                               _buildStat(Icons.visibility_outlined, widget.views, 'leituras'),
                               const SizedBox(width: 24),
-                              _buildStat(Icons.star_outline, widget.stars, 'curtidas'),
+                              _buildStat(Icons.star_outline, _currentLikes, 'curtidas'),
                               const SizedBox(width: 24),
                               _buildStat(Icons.menu_book_outlined, widget.chapters, 'capítulos'),
                             ],
@@ -702,12 +911,13 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
                               separatorBuilder: (context, index) => const SizedBox(height: 16),
                               itemBuilder: (context, index) {
                                 final comment = _comments[index];
+                                var commentContent = comment['content'] ?? '';
                                 return CommentItem(
-                                  userName: comment['userName'],
-                                  text: comment['text'],
-                                  date: comment['date'],
-                                  isCurrentUser: comment['isCurrentUser'],
-                                  onEdit: () => _editComment(comment['id'], comment['text']),
+                                  userName: comment['userName'] ?? 'Anônimo',
+                                  text: commentContent,
+                                  date: comment['date'] ?? DateTime.now(),
+                                  isCurrentUser: comment['isCurrentUser'] ?? false,
+                                  onEdit: () => _editComment(comment['id'], commentContent),
                                   onDelete: () => _deleteComment(comment['id']),
                                 );
                               },
@@ -715,7 +925,6 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
                           ],
                         ),
                       ),
-
                       const SizedBox(height: 40),
                     ],
                   ),

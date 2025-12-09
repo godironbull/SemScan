@@ -21,9 +21,16 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+<<<<<<< Updated upstream
     path('chapter/', include('core.urls.chapter_urls') ),
     path('novels/', include('core.urls.novel_urls') ),
     path('users/', include('core.urls.users_urls') ),
     path('novels_favoritar/', include('core.urls.novels_favoritar_urls') ),
     path('comments/', include('core.urls.comments_urls') ),
+=======
+    path('api/chapter/', include('core.urls.chapter_urls')),
+    path('api/novels/', include('core.urls.novel_urls')),
+    path('api/users/', include('core.urls.users_urls')),
+    path('api/', include('core.urls.interaction_urls')),
+>>>>>>> Stashed changes
 ]

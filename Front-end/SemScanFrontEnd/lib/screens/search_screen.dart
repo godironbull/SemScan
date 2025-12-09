@@ -82,7 +82,90 @@ class SearchScreenState extends State<SearchScreen> {
   @override
   void initState() {
     super.initState();
+<<<<<<< Updated upstream
     _filteredBooks = _allBooks; // Show all books initially
+=======
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadStories();
+    });
+  }
+
+  Future<void> _loadStories() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final storyProvider = context.read<StoryProvider>();
+    await storyProvider.fetchStories();
+
+    // Fetch raw data to get chapters count
+    List<Map<String, dynamic>> booksFromStories = [];
+    try {
+      final response = await ApiService.get('/novels/');
+      if (response != null) {
+        final List<dynamic> novelsData = response;
+        booksFromStories = novelsData.map((novelData) {
+          final chapters = novelData['chapters'] as List<dynamic>?;
+          final chaptersCount = chapters?.length ?? 0;
+          
+          return {
+            'id': novelData['id'].toString(),
+            'title': novelData['title'] ?? 'Sem título',
+            'author': novelData['author'] ?? 'Autor desconhecido',
+            'imageUrl': novelData['cover_image_url'] ?? 
+                       novelData['coverImageUrl'] ?? 
+                       'https://picsum.photos/200/300?random=${novelData['id']}',
+            'views': '0', // Default values - can be updated when backend provides
+            'stars': '0',
+            'chapters': chaptersCount.toString(),
+            'tags': List<String>.from(novelData['categories'] ?? []),
+            'synopsis': novelData['synopsis'] ?? '',
+            'status': novelData['status'] ?? 'Rascunho',
+          };
+        }).where((book) => book['status'] == 'Publicado').toList();
+      }
+    } catch (e) {
+      // Fallback: use stories from provider
+      final publishedStories = storyProvider.publishedStories;
+      booksFromStories = publishedStories.map((story) {
+        return {
+          'id': story.id,
+          'title': story.title,
+          'author': story.author,
+          'imageUrl': story.coverImageUrl ?? 'https://picsum.photos/200/300?random=${story.id}',
+          'views': '0',
+          'stars': '0',
+          'chapters': '0', // Default when chapters data not available
+          'tags': story.categories,
+          'synopsis': story.synopsis,
+          'status': story.status,
+        };
+      }).toList();
+    }
+
+    // Combine real books with sample books (real books first)
+    final allBooks = [...booksFromStories, ..._sampleBooks];
+
+    // Extract unique categories from all books
+    final Set<String> categoriesSet = {};
+    for (var book in allBooks) {
+      final tags = book['tags'] as List<dynamic>;
+      for (var tag in tags) {
+        final tagStr = tag.toString();
+        // Remove '+X' format tags
+        if (!tagStr.startsWith('+') && tagStr.isNotEmpty) {
+          categoriesSet.add(tagStr);
+        }
+      }
+    }
+    _availableCategories = categoriesSet.toList()..sort();
+
+    setState(() {
+      _allBooks = allBooks;
+      _filteredBooks = allBooks;
+      _isLoading = false;
+    });
+>>>>>>> Stashed changes
   }
 
   @override

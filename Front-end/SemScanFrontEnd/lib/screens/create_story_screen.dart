@@ -437,7 +437,11 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                             synopsis: _synopsisController.text.trim(),
                             categories: _selectedCategories.toList(),
                             status: 'Rascunho',
+<<<<<<< Updated upstream
                             author: 'Usuário Atual', // TODO: Get from auth
+=======
+                            author: userProvider.name ?? userProvider.username ?? 'Anônimo',
+>>>>>>> Stashed changes
                           );
                           provider.addStory(newStory);
                           _storyId = newStory.id;

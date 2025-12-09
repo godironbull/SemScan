@@ -41,6 +41,23 @@ INSTALLED_APPS = [
     'rest_framework',
 ]
 
+<<<<<<< Updated upstream
+=======
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+}
+
+# Custom authentication backend to support email-based login
+AUTHENTICATION_BACKENDS = [
+    'core.email_backend.EmailBackend',  # Custom email authentication
+    'django.contrib.auth.backends.ModelBackend',  # Default fallback
+]
+
+CORS_ALLOW_ALL_ORIGINS = True
+
+>>>>>>> Stashed changes
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
