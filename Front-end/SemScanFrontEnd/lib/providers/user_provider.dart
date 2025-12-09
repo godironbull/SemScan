@@ -99,6 +99,38 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
+  Future<Map<String, dynamic>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await ApiService.post(
+        '/users/change-password/',
+        requiresAuth: true,
+        body: {
+          'current_password': currentPassword,
+          'new_password': newPassword,
+        },
+      );
+
+      if (response != null && response['success'] == true) {
+        return {
+          'success': true,
+          'message': response['message'] ?? 'Senha alterada com sucesso',
+        };
+      }
+
+      return {
+        'success': false,
+        'error': response?['error'] ?? 'Erro ao alterar senha',
+      };
+    } catch (e) {
+      debugPrint('Change password error: $e');
+      String errorMsg = e.toString().replaceAll('Exception: ', '');
+      return {'success': false, 'error': errorMsg};
+    }
+  }
+
   
   Future<bool> updateProfile({
     required String name,

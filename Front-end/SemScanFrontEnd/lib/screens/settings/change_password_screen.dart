@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../components/custom_header.dart';
 import '../../components/custom_button.dart';
+import '../../providers/user_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_constants.dart';
 
@@ -18,6 +20,15 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   bool _obscureCurrent = true;
   bool _obscureNew = true;
   bool _obscureConfirm = true;
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _currentPasswordController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,12 +73,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               const SizedBox(height: AppConstants.gapXXL),
               CustomButton(
                 text: 'Atualizar Senha',
-                onPressed: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Senha atualizada com sucesso!')),
-                  );
-                },
+                isLoading: _isLoading,
+                onPressed: _isLoading ? null : _handleChangePassword,
               ),
             ],
           ),
@@ -119,6 +126,57 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Future<void> _handleChangePassword() async {
+    final currentPassword = _currentPasswordController.text.trim();
+    final newPassword = _newPasswordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
+
+    if (currentPassword.isEmpty || newPassword.isEmpty || confirmPassword.isEmpty) {
+      _showSnackBar('Preencha todos os campos');
+      return;
+    }
+
+    if (newPassword != confirmPassword) {
+      _showSnackBar('A confirmação da senha não confere');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final result = await context.read<UserProvider>().changePassword(
+            currentPassword: currentPassword,
+            newPassword: newPassword,
+          );
+
+      if (!mounted) return;
+
+      if (result['success'] == true) {
+        _showSnackBar(result['message'] ?? 'Senha alterada com sucesso', success: true);
+        Navigator.pop(context);
+      } else {
+        _showSnackBar(result['error'] ?? 'Não foi possível alterar a senha');
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnackBar('Erro ao alterar senha. Tente novamente.');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _showSnackBar(String message, {bool success = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: success ? Colors.green : Colors.red,
+      ),
     );
   }
 }
