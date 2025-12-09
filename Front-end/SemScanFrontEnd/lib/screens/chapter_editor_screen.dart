@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../components/custom_header.dart';
 import '../components/custom_button.dart';
@@ -20,9 +21,9 @@ class ChapterEditorScreen extends StatefulWidget {
 }
 
 class _ChapterEditorScreenState extends State<ChapterEditorScreen> {
-  // Structure: [{'title': String, 'pages': List<String>}]
+  // Structure: [{'title': String, 'pages': List<String>, 'chapterId': int?}]
   final List<Map<String, dynamic>> _chapters = [
-    {'title': 'Capítulo 1', 'pages': <String>['']},
+    {'title': 'Capítulo 1', 'pages': <String>[''], 'chapterId': null},
   ];
   int _currentChapterIndex = 0;
   int _currentPageIndex = 0;
@@ -35,11 +36,61 @@ class _ChapterEditorScreenState extends State<ChapterEditorScreen> {
   
   // Loading state for save operation
   bool _isSaving = false;
+  
+  // Auto-save debounce timer
+  Timer? _autoSaveTimer;
+  static const Duration _autoSaveDelay = Duration(seconds: 2);
+  
+  // Track if we need to save
+  bool _needsSave = false;
 
   @override
   void initState() {
     super.initState();
     _initializeControllers();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadExistingChapters();
+    });
+  }
+  
+  Future<void> _loadExistingChapters() async {
+    try {
+      // Fetch novel to get existing chapters
+      final novelResponse = await ApiService.get('/novels/${widget.storyId}/');
+      if (novelResponse != null && novelResponse['chapters'] != null) {
+        final List<dynamic> chapters = novelResponse['chapters'];
+        
+        if (chapters.isNotEmpty && mounted) {
+          setState(() {
+            _chapters.clear();
+            for (var chapterData in chapters) {
+              final content = chapterData['content'] ?? '';
+              // Split content by page separator
+              final pages = content.split('\n\n--- Página ---\n\n');
+              if (pages.isEmpty) pages.add('');
+              
+              _chapters.add({
+                'title': chapterData['title'] ?? 'Capítulo ${_chapters.length + 1}',
+                'pages': pages,
+                'chapterId': chapterData['id'],
+              });
+            }
+            
+            // If no chapters, add default one
+            if (_chapters.isEmpty) {
+              _chapters.add({'title': 'Capítulo 1', 'pages': <String>[''], 'chapterId': null});
+            }
+            
+            _currentChapterIndex = 0;
+            _currentPageIndex = 0;
+            _updateControllersForNewContext();
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading existing chapters: $e');
+      // Keep default chapter if loading fails
+    }
   }
 
   void _initializeControllers() {
@@ -52,6 +103,11 @@ class _ChapterEditorScreenState extends State<ChapterEditorScreen> {
 
   @override
   void dispose() {
+    _autoSaveTimer?.cancel();
+    // Save any pending changes before disposing
+    if (_needsSave) {
+      _saveCurrentChapter();
+    }
     _titleController.dispose();
     _contentController.dispose();
     super.dispose();
@@ -59,32 +115,54 @@ class _ChapterEditorScreenState extends State<ChapterEditorScreen> {
 
   void _updateChapterTitle() {
     _chapters[_currentChapterIndex]['title'] = _titleController.text;
+    _scheduleAutoSave();
   }
 
   void _updateChapterContent() {
     // We don't call setState here to avoid rebuilding the whole UI on every keystroke
     // which would lose focus or cursor position if not handled carefully.
     _chapters[_currentChapterIndex]['pages'][_currentPageIndex] = _contentController.text;
+    _scheduleAutoSave();
   }
-
-  Future<void> _save() async {
-    // Prevent multiple save operations
+  
+  void _scheduleAutoSave() {
+    _needsSave = true;
+    _autoSaveTimer?.cancel();
+    _autoSaveTimer = Timer(_autoSaveDelay, () {
+      if (_needsSave) {
+        _saveCurrentChapter();
+      }
+    });
+  }
+  
+  Future<void> _saveCurrentChapter() async {
     if (_isSaving) return;
     
-    setState(() {
-      _isSaving = true;
-    });
-
+    final chapter = _chapters[_currentChapterIndex];
+    final String title = chapter['title'];
+    final List<String> pages = chapter['pages'];
+    final int? chapterId = chapter['chapterId'];
+    
+    // Combine all pages into single content
+    final String content = pages.join('\n\n--- Página ---\n\n');
+    
     try {
-      // Save all chapters to the backend
-      for (var chapter in _chapters) {
-        final String title = chapter['title'];
-        final List<String> pages = chapter['pages'];
-        
-        // Combine all pages into single content
-        final String content = pages.join('\n\n--- Página ---\n\n');
-        
-        // Create chapter via API (endpoint is /api/chapter/ not /api/chapters/)
+      setState(() {
+        _isSaving = true;
+      });
+      
+      if (chapterId != null) {
+        // Update existing chapter
+        await ApiService.patch(
+          '/chapter/$chapterId/',
+          body: {
+            'title': title,
+            'content': content,
+          },
+          requiresAuth: true,
+        );
+      } else {
+        // Create new chapter
         final chapterResponse = await ApiService.post(
           '/chapter/',
           body: {
@@ -95,15 +173,99 @@ class _ChapterEditorScreenState extends State<ChapterEditorScreen> {
         );
         
         if (chapterResponse != null && chapterResponse['id'] != null) {
-          final chapterId = chapterResponse['id'];
+          final newChapterId = chapterResponse['id'];
           
-          // Associate chapter with novel (endpoint is /novels/{id}/insert/{chapter_id}/)
+          // Update local chapter with ID
+          setState(() {
+            _chapters[_currentChapterIndex]['chapterId'] = newChapterId;
+          });
+          
+          // Associate chapter with novel
           await ApiService.post(
-            '/novels/${widget.storyId}/insert/$chapterId/',
+            '/novels/${widget.storyId}/insert/$newChapterId/',
             requiresAuth: true,
           );
         }
       }
+      
+      setState(() {
+        _needsSave = false;
+        _isSaving = false;
+      });
+    } catch (e) {
+      debugPrint('Error auto-saving chapter: $e');
+      setState(() {
+        _isSaving = false;
+      });
+      // Don't show error to user for auto-save failures
+      // They can still manually save
+    }
+  }
+
+  Future<void> _save() async {
+    // Cancel any pending auto-save
+    _autoSaveTimer?.cancel();
+    
+    // Save all chapters
+    if (_isSaving) return;
+    
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      // Save all chapters to the backend
+      for (int i = 0; i < _chapters.length; i++) {
+        final chapter = _chapters[i];
+        final String title = chapter['title'];
+        final List<String> pages = chapter['pages'];
+        final int? chapterId = chapter['chapterId'];
+        
+        // Combine all pages into single content
+        final String content = pages.join('\n\n--- Página ---\n\n');
+        
+        if (chapterId != null) {
+          // Update existing chapter
+          await ApiService.patch(
+            '/chapter/$chapterId/',
+            body: {
+              'title': title,
+              'content': content,
+            },
+            requiresAuth: true,
+          );
+        } else {
+          // Create new chapter
+          final chapterResponse = await ApiService.post(
+            '/chapter/',
+            body: {
+              'title': title,
+              'content': content,
+            },
+            requiresAuth: true,
+          );
+          
+          if (chapterResponse != null && chapterResponse['id'] != null) {
+            final newChapterId = chapterResponse['id'];
+            
+            // Update local chapter with ID
+            setState(() {
+              _chapters[i]['chapterId'] = newChapterId;
+            });
+            
+            // Associate chapter with novel
+            await ApiService.post(
+              '/novels/${widget.storyId}/insert/$newChapterId/',
+              requiresAuth: true,
+            );
+          }
+        }
+      }
+      
+      setState(() {
+        _needsSave = false;
+        _isSaving = false;
+      });
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -149,7 +311,11 @@ class _ChapterEditorScreenState extends State<ChapterEditorScreen> {
 
   void _addNewChapter() {
     setState(() {
-      _chapters.add({'title': 'Capítulo ${_chapters.length + 1}', 'pages': <String>['']});
+      _chapters.add({
+        'title': 'Capítulo ${_chapters.length + 1}', 
+        'pages': <String>[''],
+        'chapterId': null,
+      });
       _currentChapterIndex = _chapters.length - 1;
       _currentPageIndex = 0;
       _updateControllersForNewContext();
@@ -157,7 +323,12 @@ class _ChapterEditorScreenState extends State<ChapterEditorScreen> {
     Navigator.pop(context); // Close the bottom sheet
   }
 
-  void _switchChapter(int index) {
+  void _switchChapter(int index) async {
+    // Save current chapter before switching
+    if (_needsSave) {
+      await _saveCurrentChapter();
+    }
+    
     setState(() {
       _currentChapterIndex = index;
       _currentPageIndex = 0;
@@ -312,17 +483,42 @@ class _ChapterEditorScreenState extends State<ChapterEditorScreen> {
       appBar: CustomHeader(
         title: 'Cap. ${_currentChapterIndex + 1} de ${_chapters.length}',
         showBackButton: true,
-        onBack: () => Navigator.pop(context),
-        actionWidget: TextButton(
-          onPressed: _save,
-          child: const Text(
-            'Salvar',
-            style: TextStyle(
-              color: AppColors.primaryYellow,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
+        onBack: () async {
+          // Save before going back
+          if (_needsSave) {
+            await _saveCurrentChapter();
+          }
+          Navigator.pop(context);
+        },
+        actionWidget: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_isSaving || _needsSave)
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      _isSaving ? AppColors.primaryYellow : AppColors.textGrey,
+                    ),
+                  ),
+                ),
+              ),
+            TextButton(
+              onPressed: _isSaving ? null : _save,
+              child: Text(
+                _isSaving ? 'Salvando...' : 'Salvar',
+                style: TextStyle(
+                  color: _isSaving ? AppColors.textGrey : AppColors.primaryYellow,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       ),
       body: Stack(

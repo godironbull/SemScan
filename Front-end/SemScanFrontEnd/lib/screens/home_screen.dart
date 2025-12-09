@@ -179,6 +179,7 @@ class _HomeContent extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) => StoryDetailScreen(
+                              storyId: story.id,
                               title: story.title,
                               author: story.author,
                               imageUrl: story.coverImageUrl ?? 'https://picsum.photos/200/300?random=$index',

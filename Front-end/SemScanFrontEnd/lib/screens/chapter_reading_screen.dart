@@ -10,14 +10,18 @@ import 'login_screen.dart';
 
 class ChapterReadingScreen extends StatefulWidget {
   final String storyTitle;
-  final String chapterTitle;
-  final String content;
+  final String? storyId;
+  final String? chapterTitle;
+  final String? content;
+  final List<Map<String, dynamic>>? chapters;
 
   const ChapterReadingScreen({
     super.key,
     required this.storyTitle,
-    required this.chapterTitle,
-    required this.content,
+    this.storyId,
+    this.chapterTitle,
+    this.content,
+    this.chapters,
   });
 
   @override
@@ -59,37 +63,51 @@ class _ChapterReadingScreenState extends State<ChapterReadingScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize mock chapters based on the passed content
-    // In a real app, this would come from the backend
-    _chapters = [
-      {
-        'title': 'Capítulo 1: O Início', // Fixed title for consistency
-        'likeCount': 120,
-        'isLiked': false,
-        'pages': [
-          widget.content,
-          'Continuação da página 1...\n\nMais texto de exemplo para demonstrar a navegação entre páginas. O leitor pode avançar para ler o restante do capítulo.',
-          'Página final do capítulo 1.\n\nAqui termina este capítulo. Clique em "Próximo Capítulo" para continuar a história.',
-        ]
-      },
-      {
-        'title': 'Capítulo 2: O Encontro',
-        'likeCount': 45,
-        'isLiked': true,
-        'pages': [
-          'Este é o início do segundo capítulo.\n\nA história continua com novos eventos e personagens. A navegação permite transitar suavemente entre os capítulos.',
-          'Página 2 do Capítulo 2.\n\nMais desenvolvimento da trama...',
-        ]
-      },
-      {
-        'title': 'Capítulo 3: A Revelação',
-        'likeCount': 89,
-        'isLiked': false,
-        'pages': [
-          'Terceiro capítulo.\n\nO clímax se aproxima...',
-        ]
-      }
-    ];
+    
+    // Use real chapters if provided, otherwise use mock data for backward compatibility
+    if (widget.chapters != null && widget.chapters!.isNotEmpty) {
+      // Convert real chapters to the format expected by the UI
+      _chapters = widget.chapters!.map((chapter) {
+        return {
+          'title': chapter['title'] ?? 'Capítulo sem título',
+          'likeCount': 0, // Default values - can be updated when backend provides
+          'isLiked': false,
+          'pages': List<String>.from(chapter['pages'] ?? []),
+          'chapterId': chapter['chapterId'],
+        };
+      }).toList();
+    } else {
+      // Fallback to mock data for backward compatibility
+      _chapters = [
+        {
+          'title': widget.chapterTitle ?? 'Capítulo 1: O Início',
+          'likeCount': 120,
+          'isLiked': false,
+          'pages': [
+            widget.content ?? 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.\n\nDuis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n\nSed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.',
+            'Continuação da página 1...\n\nMais texto de exemplo para demonstrar a navegação entre páginas. O leitor pode avançar para ler o restante do capítulo.',
+            'Página final do capítulo 1.\n\nAqui termina este capítulo. Clique em "Próximo Capítulo" para continuar a história.',
+          ]
+        },
+        {
+          'title': 'Capítulo 2: O Encontro',
+          'likeCount': 45,
+          'isLiked': true,
+          'pages': [
+            'Este é o início do segundo capítulo.\n\nA história continua com novos eventos e personagens. A navegação permite transitar suavemente entre os capítulos.',
+            'Página 2 do Capítulo 2.\n\nMais desenvolvimento da trama...',
+          ]
+        },
+        {
+          'title': 'Capítulo 3: A Revelação',
+          'likeCount': 89,
+          'isLiked': false,
+          'pages': [
+            'Terceiro capítulo.\n\nO clímax se aproxima...',
+          ]
+        }
+      ];
+    }
   }
 
   // Scroll controller to reset position on page change

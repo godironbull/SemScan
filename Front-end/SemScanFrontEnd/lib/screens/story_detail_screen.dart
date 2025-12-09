@@ -8,6 +8,7 @@ import '../components/comment_item.dart';
 import 'package:provider/provider.dart';
 import '../providers/story_provider.dart';
 import '../providers/user_provider.dart';
+import '../services/api_service.dart';
 import 'login_screen.dart';
 import 'chapter_reading_screen.dart';
 
@@ -42,10 +43,16 @@ class StoryDetailScreen extends StatefulWidget {
 class _StoryDetailScreenState extends State<StoryDetailScreen> {
   bool _isExpanded = false;
   final TextEditingController _commentController = TextEditingController();
+  List<Map<String, dynamic>> _chapters = [];
+  bool _isLoadingChapters = false;
+  int _chaptersCount = 0; // Real count of chapters
 
   @override
   void initState() {
     super.initState();
+    // Initialize chapters count from widget (will be updated when loading real data)
+    _chaptersCount = int.tryParse(widget.chapters) ?? 0;
+    
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.storyId != null) {
         final provider = context.read<StoryProvider>();
@@ -60,8 +67,97 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
             status: 'Publicado',
           ));
         }
+        _loadChapters();
       }
     });
+  }
+  
+  Future<void> _loadChapters() async {
+    if (widget.storyId == null) {
+      // If no storyId, use the chapters count from widget (for backward compatibility)
+      setState(() {
+        _chaptersCount = int.tryParse(widget.chapters) ?? 0;
+      });
+      return;
+    }
+    
+    setState(() {
+      _isLoadingChapters = true;
+    });
+    
+    try {
+      debugPrint('Loading chapters for novel ID: ${widget.storyId}');
+      final novelResponse = await ApiService.get('/novels/${widget.storyId}/');
+      debugPrint('Novel response: $novelResponse');
+      
+      if (novelResponse != null) {
+        // Check if chapters field exists (even if empty list)
+        final chaptersData = novelResponse['chapters'];
+        debugPrint('Chapters data: $chaptersData');
+        debugPrint('Chapters data type: ${chaptersData.runtimeType}');
+        
+        if (chaptersData != null) {
+          final List<dynamic> chaptersList = chaptersData is List ? chaptersData : [];
+          debugPrint('Chapters list length: ${chaptersList.length}');
+          
+          final List<Map<String, dynamic>> chapters = [];
+          for (var chapterData in chaptersList) {
+            debugPrint('Processing chapter: $chapterData');
+            final content = chapterData['content'] ?? '';
+            // Split content by page separator
+            final pages = content.split('\n\n--- Página ---\n\n');
+            if (pages.isEmpty || (pages.length == 1 && pages[0].isEmpty)) {
+              pages.clear();
+              pages.add('');
+            }
+            
+            chapters.add({
+              'title': chapterData['title'] ?? 'Capítulo sem título',
+              'pages': pages,
+              'chapterId': chapterData['id'],
+            });
+          }
+          
+          debugPrint('Processed ${chapters.length} chapters');
+          
+          if (mounted) {
+            setState(() {
+              _chapters = chapters;
+              _chaptersCount = chapters.length;
+              _isLoadingChapters = false;
+            });
+          }
+        } else {
+          debugPrint('Chapters field is null');
+          if (mounted) {
+            setState(() {
+              _chapters = [];
+              _chaptersCount = 0;
+              _isLoadingChapters = false;
+            });
+          }
+        }
+      } else {
+        debugPrint('Novel response is null');
+        if (mounted) {
+          setState(() {
+            _chapters = [];
+            _chaptersCount = 0;
+            _isLoadingChapters = false;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading chapters: $e');
+      debugPrint('Stack trace: ${StackTrace.current}');
+      if (mounted) {
+        setState(() {
+          // Fallback to widget.chapters if loading fails
+          _chaptersCount = int.tryParse(widget.chapters) ?? 0;
+          _isLoadingChapters = false;
+        });
+      }
+    }
   }
 
   Future<void> _handleDownload() async {
@@ -434,7 +530,11 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
                               const SizedBox(width: 24),
                               _buildStat(Icons.star_outline, widget.stars, 'curtidas'),
                               const SizedBox(width: 24),
-                              _buildStat(Icons.menu_book_outlined, widget.chapters, 'capítulos'),
+                              _buildStat(
+                                Icons.menu_book_outlined, 
+                                _chaptersCount > 0 ? _chaptersCount.toString() : widget.chapters, 
+                                'capítulos'
+                              ),
                             ],
                           ),
 
@@ -461,13 +561,24 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
                                 text: 'Ler agora',
                                 icon: Icons.menu_book,
                                 onPressed: () {
+                                  if (_chapters.isEmpty) {
+                                    // Show message if no chapters available
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Nenhum capítulo disponível para esta obra.'),
+                                        backgroundColor: Colors.orange,
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                  
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => ChapterReadingScreen(
                                         storyTitle: widget.title,
-                                        chapterTitle: 'Capítulo 1',
-                                        content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.\n\nDuis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n\nSed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.',
+                                        storyId: widget.storyId,
+                                        chapters: _chapters,
                                       ),
                                     ),
                                   );

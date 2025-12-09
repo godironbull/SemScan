@@ -396,13 +396,15 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                   width: double.infinity,
                   child: OutlinedButton.icon(
                     onPressed: () {
+                      final userProvider = Provider.of<UserProvider>(context, listen: false);
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => StoryDetailScreen(
+                            storyId: _storyId,
                             title: _titleController.text,
-                            author: 'Usuário Atual', // TODO: Get from auth
-                            imageUrl: widget.story?['imageUrl'] ?? 'https://picsum.photos/200/300',
+                            author: userProvider.username ?? userProvider.name ?? 'Usuário Atual',
+                            imageUrl: widget.story?['imageUrl'] ?? widget.story?['coverImageUrl'] ?? 'https://picsum.photos/200/300',
                             synopsis: _synopsisController.text,
                             tags: _selectedCategories.toList(),
                             views: '0', // TODO: Get real stats
