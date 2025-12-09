@@ -98,6 +98,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     // Avatar with Edit Button
                     Stack(
                       children: [
+<<<<<<< Updated upstream
                         Container(
                           width: 80,
                           height: 80,
@@ -117,6 +118,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     fit: BoxFit.cover,
                                   ),
                           ),
+=======
+                        Consumer<UserProvider>(
+                          builder: (context, userProvider, child) {
+                            // Check if we have a base64 image
+                            final hasBase64 = userProvider.profilePicturePath != null && 
+                                            userProvider.profilePicturePath!.isNotEmpty;
+                            
+                            debugPrint('Building avatar: hasBase64=$hasBase64, _profileImage=${_profileImage != null}');
+                            
+                            ImageProvider? imageProvider;
+                            
+                            if (_profileImage != null) {
+                              imageProvider = FileImage(_profileImage!);
+                              debugPrint('Using FileImage');
+                            } else if (hasBase64) {
+                              try {
+                                final decoded = base64Decode(userProvider.profilePicturePath!);
+                                imageProvider = MemoryImage(decoded);
+                                debugPrint('Using MemoryImage, decoded ${decoded.length} bytes');
+                              } catch (e) {
+                                debugPrint('Error decoding base64: $e');
+                                // Fallback to null (icon) on error
+                              }
+                            }
+                            
+                            return Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                color: AppColors.cardDark,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.2),
+                                  width: 2,
+                                ),
+                                image: imageProvider != null 
+                                  ? DecorationImage(
+                                      image: imageProvider,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : null,
+                              ),
+                              child: imageProvider == null
+                                  ? const Icon(
+                                      Icons.person,
+                                      size: 40,
+                                      color: AppColors.textGrey,
+                                    )
+                                  : null,
+                            );
+                          },
+>>>>>>> Stashed changes
                         ),
                         Positioned(
                           right: 0,

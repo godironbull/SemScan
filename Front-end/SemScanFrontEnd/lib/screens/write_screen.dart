@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+<<<<<<< Updated upstream
+=======
+import 'package:provider/provider.dart';
+import '../providers/user_provider.dart';
+>>>>>>> Stashed changes
 import '../components/custom_header.dart';
 import '../components/custom_button.dart';
 import '../components/profile/book_list_item.dart';
@@ -98,10 +103,138 @@ class WriteScreen extends StatelessWidget {
                             },
                           ),
                         ),
+<<<<<<< Updated upstream
                       );
                     },
                   );
                 },
+=======
+                      ),
+                    )
+                  else
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: EdgeInsets.zero,
+                      itemCount: drafts.length,
+                      itemBuilder: (context, index) {
+                        final story = drafts[index];
+                        return BookListItem(
+                          title: story.title,
+                          author: Provider.of<UserProvider>(context).name ?? story.author,
+                          imageUrl: story.coverImageUrl ?? 'https://picsum.photos/200/300?random=${story.id}',
+                          views: '0',
+                          stars: '0',
+                          chapters: '0', // TODO: Get actual chapter count
+                          tags: story.categories,
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CreateStoryScreen(
+                                  story: {
+                                    'id': story.id,
+                                    'title': story.title,
+                                    'author': story.author,
+                                    'imageUrl': story.coverImageUrl,
+                                    'tags': story.categories,
+                                    'status': story.status,
+                                    'synopsis': story.synopsis,
+                                  },
+                                ),
+                              ),
+                            );
+                            // Refresh after editing
+                            if (mounted) {
+                              Provider.of<StoryProvider>(context, listen: false).fetchStories();
+                            }
+                          },
+                        );
+                      },
+                    ),
+                  
+                  const SizedBox(height: AppConstants.gapXXL),
+                  
+                  // Published Section
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingXL),
+                    child: Text(
+                      'Minhas obras',
+                      style: TextStyle(
+                        color: AppColors.textGrey,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppConstants.gapMedium),
+                  
+                  // Published List
+                  if (published.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingXL),
+                      child: Text(
+                        'Nenhuma obra publicada',
+                        style: TextStyle(
+                          color: AppColors.textGreyDark,
+                          fontSize: 14,
+                        ),
+                      ),
+                    )
+                  else
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: EdgeInsets.zero,
+                      itemCount: published.length,
+                      itemBuilder: (context, index) {
+                        final story = published[index];
+                        return BookListItem(
+                          title: story.title,
+                          author: Provider.of<UserProvider>(context).name ?? story.author,
+                          imageUrl: story.coverImageUrl ?? 'https://picsum.photos/200/300?random=${story.id}',
+                          views: '0',
+                          stars: '0',
+                          chapters: '0', // TODO: Get actual chapter count
+                          tags: story.categories,
+                          status: 'Publicado',
+                          onFeedback: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => FeedbackScreen(
+                                  storyTitle: story.title,
+                                ),
+                              ),
+                            );
+                          },
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CreateStoryScreen(
+                                  story: {
+                                    'id': story.id,
+                                    'title': story.title,
+                                    'author': story.author,
+                                    'imageUrl': story.coverImageUrl,
+                                    'tags': story.categories,
+                                    'status': story.status,
+                                    'synopsis': story.synopsis,
+                                  },
+                                ),
+                              ),
+                            );
+                            // Refresh after editing
+                            if (mounted) {
+                              Provider.of<StoryProvider>(context, listen: false).fetchStories();
+                            }
+                          },
+                        );
+                      },
+                    ),
+                ],
+>>>>>>> Stashed changes
               ),
               
               const SizedBox(height: AppConstants.gapXXL),

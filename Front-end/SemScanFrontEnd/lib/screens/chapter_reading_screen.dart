@@ -6,6 +6,7 @@ import '../theme/app_constants.dart';
 import '../components/comment_item.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
+import '../services/api_service.dart';
 import 'login_screen.dart';
 
 class ChapterReadingScreen extends StatefulWidget {
@@ -36,29 +37,13 @@ class _ChapterReadingScreenState extends State<ChapterReadingScreen> {
   // int _likeCount = 120; 
   // bool _isLiked = false;
 
-  // Sample comments
-  final List<Map<String, dynamic>> _comments = [
-    {
-      'id': '1',
-      'userId': 'user1',
-      'userName': 'Maria Oliveira',
-      'text': 'Que capítulo incrível! Mal posso esperar pelo próximo.',
-      'date': DateTime.now().subtract(const Duration(hours: 2)),
-      'isCurrentUser': false,
-    },
-    {
-      'id': '2',
-      'userId': 'current',
-      'userName': 'Você',
-      'text': 'Achei interessante a reviravolta no final.',
-      'date': DateTime.now().subtract(const Duration(minutes: 30)),
-      'isCurrentUser': true,
-    },
-  ];
+  // Comments
+  List<Map<String, dynamic>> _comments = [];
 
   @override
   void initState() {
     super.initState();
+<<<<<<< Updated upstream
     // Initialize mock chapters based on the passed content
     // In a real app, this would come from the backend
     _chapters = [
@@ -90,6 +75,103 @@ class _ChapterReadingScreenState extends State<ChapterReadingScreen> {
         ]
       }
     ];
+=======
+    
+    // Use real chapters if provided, otherwise use mock data for backward compatibility
+    if (widget.chapters != null && widget.chapters!.isNotEmpty) {
+      // Convert real chapters to the format expected by the UI
+      _chapters = widget.chapters!.map((chapter) {
+        return {
+          'title': chapter['title'] ?? 'Capítulo sem título',
+          'likeCount': 0, // Default values - can be updated when backend provides
+          'isLiked': false,
+          'pages': List<String>.from(chapter['pages'] ?? []),
+          'chapterId': chapter['chapterId'],
+        };
+      }).toList();
+    } else {
+      // Fallback to mock data for backward compatibility
+      _chapters = [
+        {
+          'title': widget.chapterTitle ?? 'Capítulo 1: O Início',
+          'likeCount': 120,
+          'isLiked': false,
+          'pages': [
+            widget.content ?? 'Conteúdo não disponível.',
+          ]
+        },
+      ];
+    }
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadDataForCurrentChapter();
+    });
+  }
+
+  Future<void> _loadDataForCurrentChapter() async {
+    final currentChapter = _chapters[_currentChapterIndex];
+    final chapterId = currentChapter['chapterId'];
+    // If mocking or no/invalid ID, skip
+    if (chapterId == null) return;
+
+    // Load Like Status
+    try {
+      if (context.read<UserProvider>().isLoggedIn) {
+        final likeResponse = await ApiService.get('/chapters/$chapterId/like/', requiresAuth: true);
+        if (likeResponse != null && mounted) {
+            setState(() {
+                currentChapter['likeCount'] = likeResponse['count'] ?? 0;
+                currentChapter['isLiked'] = likeResponse['liked'] ?? false;
+            });
+        }
+      } else {
+         // Maybe just load count public? Currently like endpoints require Auth in view?
+         // View requires IsAuthenticated. So skip if not logged in.
+         // But we should show count? I'll leave it 0 if not logged in or modify backend later.
+      }
+    } catch (e) {
+      debugPrint('Error loading like status: $e');
+    }
+
+    // Load Comments
+    // Use the actual chapterId from the database if available, otherwise fallback (which likely won't work for API)
+    if (chapterId != null) {
+      _loadComments(chapterId.toString());
+    }
+  }
+
+  Future<void> _loadComments(String chapterId) async {
+    try {
+      final response = await ApiService.get('/comments/?chapter_id=$chapterId');
+       if (response != null && response is List) {
+          final List<Map<String, dynamic>> loaded = [];
+          
+          String? currentUserId;
+          try {
+             currentUserId = Provider.of<UserProvider>(context, listen: false).userId;
+          } catch(e) {/* ignore */}
+          
+          for (var item in response) {
+            loaded.add({
+              'id': item['id'].toString(),
+              'userId': item['user'].toString(),
+              'userName': item['username'] ?? 'Usuário',
+              'content': item['content'], // Changed from text
+              'date':  item['created_at'] != null ? DateTime.parse(item['created_at']) : DateTime.now(),
+              'isCurrentUser': item['user'].toString() == currentUserId,
+            });
+          }
+          
+          if (mounted) {
+            setState(() {
+              _comments = loaded;
+            });
+          }
+       }
+    } catch(e) {
+      debugPrint('Error loading comments: $e');
+    }
+>>>>>>> Stashed changes
   }
 
   // Scroll controller to reset position on page change
@@ -115,6 +197,7 @@ class _ChapterReadingScreenState extends State<ChapterReadingScreen> {
       } else if (_currentChapterIndex < _chapters.length - 1) {
         _currentChapterIndex++;
         _currentPageIndex = 0;
+        _loadDataForCurrentChapter();
       }
       _scrollToTop();
     });
@@ -127,6 +210,7 @@ class _ChapterReadingScreenState extends State<ChapterReadingScreen> {
       } else if (_currentChapterIndex > 0) {
         _currentChapterIndex--;
         _currentPageIndex = _chapters[_currentChapterIndex]['pages'].length - 1;
+        _loadDataForCurrentChapter();
       }
       _scrollToTop();
     });
@@ -143,11 +227,15 @@ class _ChapterReadingScreenState extends State<ChapterReadingScreen> {
     return true;
   }
 
-  void _toggleLike() {
+  Future<void> _toggleLike() async {
     if (!_checkLogin()) return;
 
+    final currentChapter = _chapters[_currentChapterIndex];
+    final chapterId = currentChapter['chapterId'];
+    if (chapterId == null) return; // Mocks don't work with API
+
+    // Optimistic update
     setState(() {
-      final currentChapter = _chapters[_currentChapterIndex];
       final isLiked = currentChapter['isLiked'] as bool;
       final likeCount = currentChapter['likeCount'] as int;
 
@@ -159,6 +247,28 @@ class _ChapterReadingScreenState extends State<ChapterReadingScreen> {
         currentChapter['isLiked'] = true;
       }
     });
+
+    try {
+      final response = await ApiService.post('/chapters/$chapterId/like/', requiresAuth: true);
+      // If response['liked'] doesn't match our optimistic state, correct it?
+      // For now, trusting our optimistic update or simple toggle.
+      // But we should strictly respect server if needed.
+    } catch (e) {
+      // Revert on error
+       setState(() {
+         final isLiked = currentChapter['isLiked'] as bool;
+         final likeCount = currentChapter['likeCount'] as int;
+         // Invert back
+         if (isLiked) {
+           currentChapter['likeCount'] = likeCount - 1;
+           currentChapter['isLiked'] = false;
+         } else {
+           currentChapter['likeCount'] = likeCount + 1;
+           currentChapter['isLiked'] = true;
+         }
+       });
+       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao curtir: $e')));
+    }
   }
 
   void _showRatingDialog() {
@@ -448,14 +558,15 @@ class _ChapterReadingScreenState extends State<ChapterReadingScreen> {
                     separatorBuilder: (context, index) => const SizedBox(height: 16),
                     itemBuilder: (context, index) {
                       final comment = _comments[index];
+                      var commentContent = comment['content'] ?? '';
                       return CommentItem(
-                        userName: comment['userName'],
-                        text: comment['text'],
+                        userName: comment['userName'] ?? 'Anônimo',
+                        text: commentContent,
                         date: comment['date'],
                         isCurrentUser: comment['isCurrentUser'],
                         onEdit: () {
                           Navigator.pop(context); // Close sheet
-                          _editComment(comment['id'], comment['text']);
+                          _editComment(comment['id'], commentContent);
                         },
                         onDelete: () {
                           Navigator.pop(context); // Close sheet
@@ -473,26 +584,47 @@ class _ChapterReadingScreenState extends State<ChapterReadingScreen> {
     );
   }
 
-  void _addComment() {
+  Future<void> _addComment() async {
     if (!_checkLogin()) return;
 
     if (_commentController.text.trim().isEmpty) return;
+    
+    final currentChapter = _chapters[_currentChapterIndex];
+    final chapterId = currentChapter['chapterId'];
+    
+    if (chapterId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erro: ID do capítulo não encontrado')),
+      );
+      return;
+    }
 
-    setState(() {
-      _comments.insert(0, {
-        'id': DateTime.now().millisecondsSinceEpoch.toString(),
-        'userId': 'current',
-        'userName': 'Você',
-        'text': _commentController.text.trim(),
-        'date': DateTime.now(),
-        'isCurrentUser': true,
-      });
-      _commentController.clear();
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Comentário adicionado com sucesso!')),
-    );
+    try {
+      final response = await ApiService.post(
+        '/comments/',
+        body: {
+          'chapter': chapterId,
+          'content': _commentController.text.trim(),
+        },
+        requiresAuth: true,
+      );
+      
+      if (response != null) {
+        _commentController.clear();
+        await _loadComments(chapterId.toString());
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Comentário adicionado com sucesso!')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+           SnackBar(content: Text('Erro ao adicionar comentário: $e')),
+        );
+      }
+    }
   }
 
   void _editComment(String commentId, String currentText) {
@@ -526,17 +658,34 @@ class _ChapterReadingScreenState extends State<ChapterReadingScreen> {
             child: const Text('Cancelar', style: TextStyle(color: AppColors.textGrey)),
           ),
           TextButton(
-            onPressed: () {
-              setState(() {
-                final index = _comments.indexWhere((c) => c['id'] == commentId);
-                if (index != -1) {
-                  _comments[index]['text'] = controller.text.trim();
-                }
-              });
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Comentário editado com sucesso!')),
-              );
+              try {
+                final response = await ApiService.put(
+                   '/comments/$commentId/',
+                   body: {'content': controller.text.trim()},
+                   requiresAuth: true,
+                );
+                
+                if (response != null) {
+                   final currentChapter = _chapters[_currentChapterIndex];
+                   final chapterId = currentChapter['chapterId'];
+                   if(chapterId != null) {
+                       await _loadComments(chapterId.toString());
+                   }
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Comentário editado com sucesso!')),
+                    );
+                  }
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Erro ao editar comentário: $e')),
+                  );
+                }
+              }
             },
             child: const Text('Salvar', style: TextStyle(color: AppColors.primaryYellow)),
           ),
@@ -564,14 +713,29 @@ class _ChapterReadingScreenState extends State<ChapterReadingScreen> {
             child: const Text('Cancelar', style: TextStyle(color: AppColors.textGrey)),
           ),
           TextButton(
-            onPressed: () {
-              setState(() {
-                _comments.removeWhere((c) => c['id'] == commentId);
-              });
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Comentário excluído com sucesso!')),
-              );
+              try {
+                await ApiService.delete('/comments/$commentId/', requiresAuth: true);
+                
+                final currentChapter = _chapters[_currentChapterIndex];
+                final chapterId = currentChapter['chapterId'];
+                if(chapterId != null) {
+                    await _loadComments(chapterId.toString());
+                }
+                
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Comentário excluído com sucesso!')),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Erro ao excluir comentário: $e')),
+                  );
+                }
+              }
             },
             child: const Text('Excluir', style: TextStyle(color: Colors.red)),
           ),
