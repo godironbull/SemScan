@@ -82,3 +82,94 @@ flutter run
 
 O projeto é dividido em duas partes principais: o diretório do Flutter, onde está o aplicativo, e o diretório do back-end, que contém o projeto Django e o banco SQLite.
 A API centraliza as rotas, modelos e regras de negócio.
+
+## Testes
+
+### Back-end (Django)
+
+- Instalar dependências e aplicar migrações:
+
+```
+cd Back-end/SemScanBackEnd
+python -m pip install -r requirements.txt
+python manage.py migrate
+```
+
+- Executar a suíte de testes:
+
+```
+python manage.py test --verbosity=2
+```
+
+- Cobertura (opcional, se tiver `coverage` instalado):
+
+```
+coverage run manage.py test && coverage xml -o backend-coverage.xml
+```
+
+### Front-end (Flutter)
+
+- Instalar dependências:
+
+```
+cd Front-end/SemScanFrontEnd
+flutter pub get
+```
+
+- Executar testes com cobertura:
+
+```
+flutter test --coverage
+```
+
+Os arquivos de teste estão em `Front-end/SemScanFrontEnd/test/`.
+
+### Testes Unitários com Pytest (Python)
+
+- Executar pytest no back-end:
+
+```
+cd Back-end/SemScanBackEnd
+pytest -q --disable-warnings --maxfail=1 --cov=core --cov-report=xml:pytest-coverage.xml
+```
+
+### Testes de Aceitação com Robot Framework
+
+- Pré-requisito: servidor Django rodando em outra aba/terminal:
+
+```
+cd Back-end/SemScanBackEnd
+python manage.py runserver
+```
+
+- Em um novo terminal, executar os testes de aceitação:
+
+```
+cd Back-end/SemScanBackEnd
+robot -d reports tests_acceptance
+```
+
+Relatórios gerados em `Back-end/SemScanBackEnd/reports`. Os casos cobrem:
+- Criação/consulta de usuário
+- Erro ao comentar em novel inexistente
+- Tempo de resposta básico de `/novels/`
+
+### Pre-commit (automatizar execução de testes antes do commit)
+
+- Instalar o hook de pre-commit (PowerShell):
+
+```
+pwsh -File scripts/setup_hooks.ps1
+```
+
+- O hook chama `scripts/pre_commit.ps1` e bloqueia o commit se algum teste falhar. Para pular testes do front-end em um commit específico:
+
+```
+pwsh -File scripts/pre_commit.ps1 -SkipFrontend
+```
+
+### CI/CD
+
+- Os testes de back-end e front-end rodam automaticamente no CI para cada push/PR.
+- Pipeline definida em `.github/workflows/ci.yml`.
+- Artefatos de cobertura são publicados (backend: `backend-coverage.xml`, `pytest-coverage.xml`; frontend: `coverage/lcov.info`).
