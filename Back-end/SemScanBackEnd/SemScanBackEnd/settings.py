@@ -41,8 +41,7 @@ INSTALLED_APPS = [
     'rest_framework',
 ]
 
-<<<<<<< Updated upstream
-=======
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
@@ -57,7 +56,7 @@ AUTHENTICATION_BACKENDS = [
 
 CORS_ALLOW_ALL_ORIGINS = True
 
->>>>>>> Stashed changes
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

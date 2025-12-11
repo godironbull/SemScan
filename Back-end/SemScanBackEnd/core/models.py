@@ -1,5 +1,25 @@
 # Create your models here.
 from django.db import models
+class User(models.Model):
+    id = models.AutoField(primary_key=True)
+    username = models.CharField(max_length=100, unique=True)
+    email = models.EmailField(unique=True)
+    
+    def _str_(self):
+        return self.username
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email,
+        }
+    def add_favorite(self, novel):
+        self.favorites.add(novel)
+        self.save()
+    
+    def remove_favorite(self, novel):
+        self.favorites.remove(novel)
+        self.save()
 
 class Chapter(models.Model):
     id = models.AutoField(primary_key=True)
@@ -39,7 +59,7 @@ class Novel(models.Model):
         self.save()
 
 class Comments(models.Model):
-<<<<<<< Updated upstream
+
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='comments')
     novel = models.ForeignKey(Novel, on_delete=models.CASCADE, related_name='comments')
@@ -68,28 +88,7 @@ class Favorite(models.Model):
             'user': self.user.to_dict(),
             'novel': self.novel.to_dict(),
         }
-        
-class User(models.Model):
-    id = models.AutoField(primary_key=True)
-    username = models.CharField(max_length=100, unique=True)
-    email = models.EmailField(unique=True)
     
-    def __str__(self):
-        return self.username
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'username': self.username,
-            'email': self.email,
-        }
-    def add_favorite(self, novel):
-        self.favorites.add(novel)
-        self.save()
-    
-    def remove_favorite(self, novel):
-        self.favorites.remove(novel)
-        self.save()
-=======
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     novel = models.ForeignKey(Novel, on_delete=models.CASCADE, related_name='comments', null=True, blank=True)
     chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE, related_name='comments', null=True, blank=True)
@@ -115,4 +114,4 @@ class Like(models.Model):
 
     class Meta:
         unique_together = ('user', 'novel', 'chapter')
->>>>>>> Stashed changes
+
